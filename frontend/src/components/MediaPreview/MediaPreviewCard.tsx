@@ -52,7 +52,15 @@ export function MediaPreviewCard({
         <PlaylistPreview 
           playlistInfo={playlist}
           playlistUrl={url}
-          onDownloadStart={onDownloadStart}
+          onDownloadStart={() => {
+            // PlaylistPreview handles the download, just call the callback with default options
+            onDownloadStart({
+              audioOnly: defaultAudioOnly,
+              quality: '720p',
+              downloadSubtitles: false,
+              downloadThumbnail: false,
+            });
+          }}
           defaultAudioOnly={defaultAudioOnly}
         />
       </div>
