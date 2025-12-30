@@ -17,26 +17,7 @@ services:
         value: production
       - key: PORT
         value: 3001
-      - key: REDIS_HOST
-        fromDatabase:
-          name: redis
-          property: host
-      - key: REDIS_PORT
-        fromDatabase:
-          name: redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromDatabase:
-          name: redis
-          property: password
-      # Alternative: Use REDIS_URL if available (some Redis services provide this)
-      - key: REDIS_URL
-        fromDatabase:
-          name: redis
-          property: connectionString
-        required: false
       - key: FRONTEND_URL
-        sync: false
         value: media-downloader-orcin.vercel.app
       - key: DOWNLOAD_DIR
         value: /opt/render/project/src/downloads
@@ -47,5 +28,5 @@ databases:
   - name: redis
     databaseName: redis
     plan: free
-    # type: redis
+    type: redis
 
