@@ -12,7 +12,7 @@ Có **2 cách** để deploy Redis trên Render:
 
 ### Bước 1: Chuẩn bị file render.yaml
 
-File `backend/render.yaml` đã được cấu hình sẵn với Redis:
+File `backend/render.yaml` đã được cấu hình sẵn với Redis database definition:
 
 ```yaml
 databases:
@@ -21,6 +21,8 @@ databases:
     plan: free
     type: redis
 ```
+
+**Lưu ý:** Redis environment variables (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`) sẽ **KHÔNG** được tự động link trong Blueprint. Bạn cần link manually sau khi deploy (xem Bước 3).
 
 ### Bước 2: Deploy Blueprint
 
@@ -42,10 +44,43 @@ databases:
    - Render sẽ tự động:
      - ✅ Tạo Redis service
      - ✅ Tạo Web Service
-     - ✅ Link Redis với Web Service
-     - ✅ Inject environment variables (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`)
+     - ⚠️ **Redis chưa được link** - cần link manually (xem Bước 3)
 
-### Bước 3: Verify Redis đã được tạo
+### Bước 3: Link Redis với Web Service (QUAN TRỌNG - BẮT BUỘC)
+
+**QUAN TRỌNG:** Blueprint sẽ tạo Redis service nhưng **KHÔNG tự động link** với Web Service. Bạn **PHẢI** link manually:
+
+1. **Vào Web Service** → **Settings** → **Environment**
+
+2. **Click "Add Environment Variable"**
+
+3. **Chọn "Link from Redis"** (không phải manual input!)
+
+4. **Chọn Redis service** đã được tạo (tên: `redis`)
+
+5. **Render sẽ tự động thêm 3 biến:**
+   - `REDIS_HOST` = Internal Hostname từ Redis (ví dụ: `d-redis-xxx.render.com`)
+   - `REDIS_PORT` = Port từ Redis (thường là `6379`)
+   - `REDIS_PASSWORD` = Password từ Redis (có thể empty)
+
+6. **Verify:**
+   - Trong Environment Variables, phải thấy:
+     - `REDIS_HOST` = `d-redis-xxx.render.com` (không phải localhost!)
+     - `REDIS_PORT` = `6379`
+     - `REDIS_PASSWORD` = (có thể empty)
+
+### Bước 4: Restart Web Service
+
+Sau khi link Redis:
+
+1. **Vào Web Service** → **Manual Deploy**
+2. **Chọn "Clear build cache & deploy"**
+3. **Click "Deploy"**
+
+Hoặc đơn giản hơn:
+- Click **"Restart"** nếu service đang chạy
+
+### Bước 5: Verify Redis đã được tạo
 
 1. Vào **Dashboard** → Tìm service **"redis"**
 2. Status phải là **"Available"** (màu xanh)
@@ -54,19 +89,7 @@ databases:
    - **Port**: `6379`
    - **Password**: (có thể empty hoặc có giá trị)
 
-### Bước 4: Verify Redis đã được link với Web Service
-
-1. Vào **Web Service** → **Settings** → **Environment**
-2. Scroll xuống phần **Environment Variables**
-3. Phải thấy các biến sau (tự động được thêm):
-   - ✅ `REDIS_HOST` = `d-redis-xxx.render.com` (không phải localhost!)
-   - ✅ `REDIS_PORT` = `6379`
-   - ✅ `REDIS_PASSWORD` = (có thể empty)
-
-4. **Nếu KHÔNG thấy các biến này:**
-   - Xem [Cách 2: Manual Link](#cách-2-manual-setup) bên dưới
-
-### Bước 5: Verify Redis Connection
+### Bước 6: Verify Redis Connection
 
 Sau khi Web Service deploy xong:
 
@@ -227,11 +250,11 @@ curl https://your-backend.onrender.com/api/health/redis
 
 ### ❌ Blueprint không tự động link Redis
 
-**Nguyên nhân:** Blueprint có thể không tự động link trong một số trường hợp
+**Nguyên nhân:** Blueprint **KHÔNG tự động link** Redis với Web Service. Đây là behavior bình thường của Render.
 
 **Fix:**
-- Dùng [Cách 2: Manual Setup](#cách-2-manual-setup)
-- Link Redis manually theo [Bước 3: Link Redis](#bước-3-link-redis-với-web-service)
+- **BẮT BUỘC** phải link Redis manually sau khi deploy Blueprint
+- Xem [Bước 3: Link Redis](#bước-3-link-redis-với-web-service-quan-trọng---bắt-buộc) ở trên
 
 ---
 
