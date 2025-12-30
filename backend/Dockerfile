@@ -14,9 +14,10 @@ RUN set -eux; \
         && rm -rf /var/lib/apt/lists/*
 
 # Cài đặt yt-dlp
+# Sử dụng --break-system-packages để bypass externally-managed-environment (Python 3.11+)
 RUN set -eux; \
-    python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
-    python3 -m pip install --no-cache-dir yt-dlp
+    python3 -m pip install --no-cache-dir --break-system-packages --upgrade pip setuptools wheel; \
+    python3 -m pip install --no-cache-dir --break-system-packages yt-dlp
 
 WORKDIR /app
 
