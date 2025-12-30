@@ -1,10 +1,12 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 # Cài đặt Python và yt-dlp dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
-    py3-pip \
+    python3-pip \
     ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install --upgrade pip \
     && pip3 install yt-dlp
 
 WORKDIR /app
