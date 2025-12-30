@@ -1,13 +1,22 @@
 FROM node:18-slim
 
-# Cài đặt Python và yt-dlp dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install --upgrade pip \
-    && pip3 install yt-dlp
+# Cài đặt system dependencies
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-dev \
+        ffmpeg \
+        curl \
+        ca-certificates \
+        build-essential \
+        && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt yt-dlp
+RUN set -eux; \
+    python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
+    python3 -m pip install --no-cache-dir yt-dlp
 
 WORKDIR /app
 
