@@ -1,9 +1,13 @@
+[providers]
+node = "18"
+
 [phases.setup]
 nixPkgs = ["nodejs-18_x", "python3", "ffmpeg"]
 
 [phases.install]
 cmds = [
-  "pip install yt-dlp",
+  "pip3 install --upgrade pip",
+  "pip3 install yt-dlp",
   "npm install"
 ]
 

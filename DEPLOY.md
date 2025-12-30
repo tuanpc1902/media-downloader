@@ -129,25 +129,39 @@ Railway hỗ trợ tốt cho Node.js apps với Redis và có thể cài đặt 
 
 2. Tạo `backend/nixpacks.toml`:
 ```toml
+[providers]
+node = "18"
+
 [phases.setup]
 nixPkgs = ["nodejs-18_x", "python3", "ffmpeg"]
 
 [phases.install]
 cmds = [
-  "pip install yt-dlp",
+  "pip3 install --upgrade pip",
+  "pip3 install yt-dlp",
   "npm install"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
 ]
 
 [start]
 cmd = "npm start"
 ```
 
+**Lưu ý**: Nếu gặp lỗi "Error creating build plan with Nixpacks", hãy:
+- Đảm bảo file `package.json` có trong thư mục backend
+- Kiểm tra `railway.json` có đúng cấu trúc
+- Thử sử dụng Dockerfile thay vì Nixpacks (xem phần Alternative bên dưới)
+
 ### Bước 2: Deploy
 
 1. Truy cập [railway.app](https://railway.app)
 2. New Project → Deploy from GitHub
 3. Chọn repository
-4. Add Service → GitHub Repo → Chọn backend folder
+4. **Quan trọng**: Khi add service, chọn **Root Directory** là `backend` (không phải root của repo)
 5. Add Redis service (New → Redis)
 6. Cấu hình Environment Variables:
    ```
@@ -161,12 +175,37 @@ cmd = "npm start"
    ```
 7. Generate Domain trong Settings → Networking
 
-### Bước 3: Cài đặt yt-dlp và FFmpeg
+### Alternative: Sử dụng Dockerfile (nếu Nixpacks không hoạt động)
 
-Railway sẽ tự động cài qua nixpacks.toml. Nếu không, thêm vào build command:
-```bash
-pip install yt-dlp && apt-get update && apt-get install -y ffmpeg
-```
+Nếu gặp lỗi với Nixpacks, bạn có thể sử dụng Dockerfile:
+
+1. Trong Railway Dashboard → Service Settings → Build & Deploy
+2. Chọn **Dockerfile** thay vì Nixpacks
+3. Đảm bảo Dockerfile đã có trong `backend/Dockerfile`
+4. Railway sẽ tự động detect và sử dụng Dockerfile
+
+### Bước 3: Troubleshooting
+
+**Nếu gặp lỗi "Error creating build plan with Nixpacks":**
+
+1. **Kiểm tra Root Directory**: 
+   - Trong Railway Dashboard → Service Settings → Source
+   - Đảm bảo **Root Directory** được set là `backend` (không phải root của repo)
+
+2. **Sử dụng Dockerfile thay vì Nixpacks**:
+   - Trong Railway Dashboard → Service Settings → Build & Deploy
+   - Chọn **Dockerfile** thay vì Nixpacks
+   - Railway sẽ tự động detect `backend/Dockerfile`
+
+3. **Kiểm tra file cấu hình**:
+   - Đảm bảo `backend/package.json` tồn tại
+   - Đảm bảo `backend/nixpacks.toml` hoặc `backend/Dockerfile` tồn tại
+   - Đảm bảo `backend/railway.json` có đúng cấu trúc
+
+4. **Manual build command** (nếu cần):
+   ```bash
+   pip3 install yt-dlp && npm install && npm run build
+   ```
 
 ---
 
