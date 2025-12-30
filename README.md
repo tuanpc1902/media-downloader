@@ -134,6 +134,26 @@ brew services start redis
 docker-compose up -d
 ```
 
+## 🌐 Deploy lên Production
+
+Xem file [DEPLOY.md](./DEPLOY.md) để hướng dẫn chi tiết deploy lên:
+- **Frontend**: Vercel, Netlify
+- **Backend**: Railway, Render, VPS
+
+### Quick Deploy
+
+**Frontend (Vercel):**
+```bash
+cd frontend
+vercel --prod
+```
+
+**Backend (Railway):**
+1. Connect GitHub repo
+2. Add Redis service
+3. Set environment variables
+4. Deploy
+
 ## 📝 Environment Variables
 
 ### Backend (.env)

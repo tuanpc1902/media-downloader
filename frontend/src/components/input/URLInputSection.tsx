@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Search, X, Loader2, Upload, AlertCircle, CheckCircle, Copy } from 'lucide-react';
+import { Search, X, Upload, AlertCircle, CheckCircle, Copy } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { cn } from '../../utils/cn';
@@ -85,7 +85,7 @@ export function URLInputSection({ onAnalyze, onClear, loading = false, placehold
     setValidationResults(results);
   }, [text, parseURLs]);
 
-  const validURLs = parseURLs(text).filter((url, index) => {
+  const validURLs = parseURLs(text).filter((_url, index) => {
     const result = validationResults.get(index);
     return result?.isValid;
   });
@@ -267,15 +267,20 @@ export function URLInputSection({ onAnalyze, onClear, loading = false, placehold
         <div className="flex flex-wrap gap-2">
           {validURLs.map((url, index) => {
             const platform = detectPlatform(url);
-            const platformNames = {
+            const platformNames: Record<PlatformType, string> = {
               youtube: 'YouTube',
               soundcloud: 'SoundCloud',
               tiktok: 'TikTok',
             };
             
+            // Only show badge if platform is known
+            if (platform === 'unknown') {
+              return null;
+            }
+            
             return (
-              <Badge key={index} variant="platform" platform={platform}>
-                {platformNames[platform] || platform}
+              <Badge key={index} variant="platform" platform={platform as PlatformType}>
+                {platformNames[platform as PlatformType] || platform}
               </Badge>
             );
           })}

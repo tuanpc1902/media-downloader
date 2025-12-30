@@ -48,6 +48,7 @@ export interface DownloadJob {
   totalBytes?: number;
   fragmentIndex?: number;
   fragmentCount?: number;
+  indeterminate?: boolean; // Nếu true, không có progress % chính xác (hiển thị spinner)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -144,7 +145,8 @@ export interface PlaylistDownloadRequest {
 export type MediaInfo = VideoInfo | PlaylistInfo;
 
 // Platform types
-export type Platform = 'youtube' | 'soundcloud' | 'tiktok';
+export type Platform = 'youtube' | 'soundcloud' | 'tiktok' | 'unknown';
+export type PlatformType = 'youtube' | 'soundcloud' | 'tiktok';
 
 // Enhanced VideoInfo with platform
 export interface EnhancedVideoInfo extends VideoInfo {

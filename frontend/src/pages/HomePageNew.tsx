@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '../components/Layout/MainLayout';
 import { URLInputSection } from '../components/input/URLInputSection';
 import { MediaPreviewCard } from '../components/media/MediaPreviewCard';
-import { AlertCircle, Download, DownloadCloud } from 'lucide-react';
+import { AlertCircle, DownloadCloud } from 'lucide-react';
 import { MediaInfo } from '../types/api';
 import { analyzeVideo, analyzePlaylist, createDownload } from '../services/api';
 import { cn } from '../utils/cn';
@@ -157,7 +157,6 @@ export function HomePageNew() {
             url: item.url,
             audioOnly: false,
             quality: '720p',
-            outputFormat: 'mp4',
           };
 
           const job = await createDownload(request);

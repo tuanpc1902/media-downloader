@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Play, Clock, User, List } from 'lucide-react';
+import { Download, Clock, User, List } from 'lucide-react';
 import { PlaylistInfo, PlaylistDownloadRequest } from '../types';
 import { createPlaylistDownload } from '../services/api';
 import { useDownloadStore } from '../stores/downloadStore';

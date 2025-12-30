@@ -3,7 +3,7 @@ import { MainLayout } from '../components/Layout/MainLayout';
 import { LegalDisclaimer } from '../components/tiktok/LegalDisclaimer';
 import { TikTokInputSection } from '../components/tiktok/TikTokInputSection';
 import { TikTokPreviewCard } from '../components/tiktok/TikTokPreviewCard';
-import { DownloadQueuePanel } from '../components/download/DownloadQueuePanel';
+// import { DownloadQueuePanel } from '../components/download/DownloadQueuePanel'; // Unused for now
 import { useTikTokStore } from '../stores/tiktokStore';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';

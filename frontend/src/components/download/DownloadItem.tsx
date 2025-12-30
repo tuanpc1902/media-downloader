@@ -1,5 +1,5 @@
 import { DownloadJob, JobStatus } from '../../types';
-import { Download, X, CheckCircle, AlertCircle, Loader2, FileDown, Clock, Pause, Play, RotateCcw, Copy, FolderOpen, MoreVertical } from 'lucide-react';
+import { Download, X, CheckCircle, AlertCircle, Loader2, FileDown, RotateCcw, Copy, FolderOpen, MoreVertical } from 'lucide-react';
 import { downloadFile, cancelDownload } from '../../services/api';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { showToast } from '../Toast';
@@ -55,7 +55,7 @@ function getStatusVariant(status: JobStatus): 'pending' | 'downloading' | 'proce
 
 export function DownloadItem({ job, compact = false }: DownloadItemProps) {
   const removeJob = useDownloadStore((state) => state.removeJob);
-  const [expanded, setExpanded] = useState(false);
+  // const [expanded, setExpanded] = useState(false); // Unused for now
   const [showMenu, setShowMenu] = useState(false);
   const prevStatusRef = useRef<JobStatus>(job.status);
   const hasShownSuccessRef = useRef(false);

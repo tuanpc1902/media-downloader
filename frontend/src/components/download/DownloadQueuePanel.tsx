@@ -3,7 +3,7 @@ import { useDownloadStore } from '../../stores/downloadStore';
 import { DownloadItem } from '../DownloadItem';
 import { DownloadStats } from './DownloadStats';
 import type { JobStatus } from '../../types';
-import { ChevronDown, ChevronUp, X, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { Button } from '../common/Button';
 

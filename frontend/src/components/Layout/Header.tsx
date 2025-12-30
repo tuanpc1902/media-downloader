@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Download, Settings, History, Menu, X, Wifi, WifiOff } from 'lucide-react';
+import { Home, Download, Settings, History, Wifi, WifiOff } from 'lucide-react';
 import { DarkModeToggle } from '../DarkModeToggle';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { useState, useEffect } from 'react';

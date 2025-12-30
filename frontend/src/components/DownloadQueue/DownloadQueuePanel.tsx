@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Download, Filter, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { DownloadItem } from '../DownloadItem';
-import { DownloadJob, JobStatus } from '../../types';
+import { JobStatus } from '../../types';
 
 export function DownloadQueuePanel() {
   const [isExpanded, setIsExpanded] = useState(true);

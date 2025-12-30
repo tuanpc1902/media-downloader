@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { AlertTriangle, X, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '../common/Button';
-import { cn } from '../../utils/cn';
 
 interface LegalDisclaimerProps {
   onAccept: () => void;
@@ -16,7 +15,7 @@ interface LegalDisclaimerProps {
  */
 export function LegalDisclaimer({ onAccept, onDecline }: LegalDisclaimerProps) {
   const [accepted, setAccepted] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  // const [showDetails, setShowDetails] = useState(false); // Unused for now
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

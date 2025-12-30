@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Search, X, Loader2, Upload, AlertCircle, CheckCircle, Copy } from 'lucide-react';
+import { Search, X, Upload, AlertCircle, CheckCircle, Copy } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { cn } from '../../utils/cn';
@@ -95,7 +95,7 @@ export function TikTokInputSection({ onAnalyze, onClear, loading = false }: TikT
   }, [text, parseURLs, validateTikTokURL]);
 
   const urls = parseURLs(text);
-  const validURLs = urls.filter((url, index) => {
+  const validURLs = urls.filter((_url, index) => {
     const result = validationResults.get(index);
     return result?.isValid;
   });
@@ -148,7 +148,7 @@ export function TikTokInputSection({ onAnalyze, onClear, loading = false }: TikT
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    const droppedText = e.dataTransfer.getData('text/plain');
+    const droppedText = e.dataTransfer?.getData('text/plain');
     if (droppedText) {
       const currentUrls = text ? text + '\n' + droppedText : droppedText;
       setText(currentUrls);

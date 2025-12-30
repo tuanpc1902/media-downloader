@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: yt-downloader-backend
+    env: node
+    buildCommand: pip install yt-dlp && npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: REDIS_HOST
+        fromDatabase:
+          name: redis
+          property: host
+      - key: REDIS_PORT
+        fromDatabase:
+          name: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromDatabase:
+          name: redis
+          property: password
+      - key: FRONTEND_URL
+        sync: false
+
+databases:
+  - name: redis
+    databaseName: redis
+    plan: free
+    type: redis
+

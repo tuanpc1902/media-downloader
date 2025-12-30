@@ -34,7 +34,7 @@ export const analyzeVideoAsMedia = async (url: string): Promise<MediaInfo> => {
     thumbnail: videoInfo.thumbnail,
     channel: videoInfo.channel,
     duration: videoInfo.duration,
-    viewCount: videoInfo.viewCount,
+    views: videoInfo.viewCount, // Use 'views' instead of 'viewCount'
     uploadDate: videoInfo.uploadDate,
     description: videoInfo.description,
     formats: videoInfo.formats,

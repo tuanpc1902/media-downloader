@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Clock, Eye, Calendar, User, List, Play } from 'lucide-react';
+import { Download, Clock, Eye, Calendar, User } from 'lucide-react';
 import { VideoInfo, PlaylistInfo } from '../../types';
 import { FormatSelector } from '../FormatSelector';
 import { PlaylistPreview } from '../PlaylistPreview';
@@ -155,12 +155,15 @@ export function MediaPreviewCard({
         <FormatSelector
           videoInfo={video}
           videoUrl={url}
-          onDownloadStart={() => onDownloadStart({
-            audioOnly: defaultAudioOnly,
-            quality: '720p',
-            downloadSubtitles: false,
-            downloadThumbnail: false,
-          })}
+          onDownloadStart={() => {
+            // FormatSelector handles the download, just call the callback
+            onDownloadStart({
+              audioOnly: defaultAudioOnly,
+              quality: '720p',
+              downloadSubtitles: false,
+              downloadThumbnail: false,
+            });
+          }}
           defaultAudioOnly={defaultAudioOnly}
         />
       </div>

@@ -1,6 +1,6 @@
 import { useDownloadStore } from '../../stores/downloadStore';
 import { cn } from '../../utils/cn';
-import { Download, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Download, CheckCircle, XCircle } from 'lucide-react';
 
 interface DownloadStatsProps {
   className?: string;

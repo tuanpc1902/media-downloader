@@ -50,7 +50,7 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
-export function MediaPreviewCard({ media, mediaUrl, onDownload, onCancel, defaultAudioOnly = false, compact = false }: MediaPreviewCardProps) {
+export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly = false, compact = false }: MediaPreviewCardProps) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   
   // Convert MediaInfo to VideoInfo format for FormatSelector

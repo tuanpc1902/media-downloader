@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Loader2, X, AlertCircle } from 'lucide-react';
+import { Download, Loader2, X } from 'lucide-react';
 import { createBatchDownload } from '../services/api';
 import { useDownloadStore } from '../stores/downloadStore';
 import { BatchDownloadRequest } from '../types';
@@ -154,7 +154,7 @@ export function BatchURLInput({ onDownloadStart }: BatchURLInputProps) {
       if (response.errors && response.errors.length > 0) {
         showToast(
           `Đã tạo ${response.jobs.length} jobs, ${response.errors.length} lỗi`,
-          'warning'
+          'info'
         );
       } else {
         showToast(`Đã tạo ${response.jobs.length} download jobs`, 'success');
