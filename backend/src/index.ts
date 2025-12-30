@@ -37,8 +37,12 @@ Promise.all([
   checkDependencies(),
   checkRedis().then((available) => {
     if (!available) {
+      const redisInfo = config.redis.url 
+        ? `Redis URL: ${config.redis.url.replace(/:[^:@]+@/, ':****@')}` // Hide password in URL
+        : `Redis at ${config.redis.host}:${config.redis.port}`;
       throw new Error(
-        `Redis connection failed. Please make sure Redis is running at ${config.redis.host}:${config.redis.port}`
+        `Redis connection failed. Please make sure Redis is running at ${redisInfo}. ` +
+        `Check environment variables: REDIS_HOST, REDIS_PORT, REDIS_PASSWORD (or REDIS_URL)`
       );
     }
   }),

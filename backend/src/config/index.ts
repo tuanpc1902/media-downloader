@@ -11,7 +11,12 @@ export const config = {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    // Handle empty string as undefined (Render may set empty string)
+    password: process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.trim() !== '' 
+      ? process.env.REDIS_PASSWORD 
+      : undefined,
+    // Render Redis connection string (alternative format)
+    url: process.env.REDIS_URL || undefined,
   },
   download: {
     dir: process.env.DOWNLOAD_DIR || './downloads',

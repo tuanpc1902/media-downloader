@@ -253,24 +253,36 @@ File `backend/render.yaml` đã được cấu hình sẵn với:
    - Click "Create"
 
 6. **Cấu hình Environment Variables:**
-   Trong Web Service → Environment:
-   ```
-   NODE_ENV=production
-   PORT=3001
-   REDIS_HOST=<từ Redis service>
-   REDIS_PORT=<từ Redis service>
-   REDIS_PASSWORD=<từ Redis service>
-   FRONTEND_URL=https://your-frontend.vercel.app
-   DOWNLOAD_DIR=/opt/render/project/src/downloads
-   LOG_FILE=/opt/render/project/src/logs/app.log
-   ```
+   Trong Web Service → Settings → Environment:
    
-   **Lưu ý**: Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` nếu bạn link Redis service.
+   **Quan trọng**: Nếu dùng Blueprint (render.yaml), các env vars sẽ được tự động set từ Redis service.
+   
+   Nếu deploy manual, bạn cần:
+   - Link Redis service: Add Environment Variable → Link from Redis → Chọn Redis service
+   - Hoặc set manually:
+     ```
+     NODE_ENV=production
+     PORT=3001
+     REDIS_HOST=<từ Redis service Info tab>
+     REDIS_PORT=<từ Redis service Info tab>
+     REDIS_PASSWORD=<từ Redis service Info tab>
+     FRONTEND_URL=https://your-frontend.vercel.app
+     DOWNLOAD_DIR=/opt/render/project/src/downloads
+     LOG_FILE=/opt/render/project/src/logs/app.log
+     ```
+   
+   **Lưu ý**: 
+   - Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` khi link Redis service
+   - Nếu password là empty, code sẽ handle đúng
+   - Có thể dùng `REDIS_URL` nếu Redis service cung cấp connection string
 
-7. **Link Redis Service:**
+7. **Link Redis Service (QUAN TRỌNG):**
    - Trong Web Service → Settings → Environment
-   - Add Environment Variable → Link from Redis
-   - Chọn Redis service đã tạo
+   - Click "Add Environment Variable"
+   - Chọn "Link from Redis" (không phải manual input)
+   - Chọn Redis service đã tạo ở bước 5
+   - Render sẽ tự động thêm `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+   - **Lưu ý**: Nếu không link, service sẽ không thể kết nối Redis
 
 8. **Deploy:**
    - Click "Save Changes"

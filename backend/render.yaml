@@ -29,6 +29,12 @@ services:
         fromDatabase:
           name: redis
           property: password
+      # Alternative: Use REDIS_URL if available (some Redis services provide this)
+      - key: REDIS_URL
+        fromDatabase:
+          name: redis
+          property: connectionString
+        required: false
       - key: FRONTEND_URL
         sync: false
         value: media-downloader-orcin.vercel.app

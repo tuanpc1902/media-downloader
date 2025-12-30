@@ -10,14 +10,29 @@ export async function checkRedis(): Promise<boolean> {
     let resolved = false;
     let timeout: NodeJS.Timeout | null = null;
     
-    const redis = new Redis({
+    // Log Redis config (without password)
+    logger.info('Checking Redis connection...', {
       host: config.redis.host,
       port: config.redis.port,
-      password: config.redis.password,
-      maxRetriesPerRequest: null,
-      retryStrategy: () => null, // Không retry khi check
-      connectTimeout: 3000,
+      hasPassword: !!config.redis.password,
+      hasUrl: !!config.redis.url,
     });
+    
+    // Support both connection string (REDIS_URL) and individual config
+    const redis = config.redis.url
+      ? new Redis(config.redis.url, {
+          maxRetriesPerRequest: null,
+          retryStrategy: () => null, // Không retry khi check
+          connectTimeout: 10000, // Increase timeout for Render (10 seconds)
+        })
+      : new Redis({
+          host: config.redis.host,
+          port: config.redis.port,
+          password: config.redis.password || undefined, // Handle empty string as undefined
+          maxRetriesPerRequest: null,
+          retryStrategy: () => null, // Không retry khi check
+          connectTimeout: 10000, // Increase timeout for Render (10 seconds)
+        });
 
     const safeResolve = (value: boolean) => {
       if (!resolved) {
@@ -51,11 +66,11 @@ export async function checkRedis(): Promise<boolean> {
       safeResolve(false);
     });
 
-    // Timeout sau 5 giây
+    // Timeout sau 10 giây (tăng cho Render)
     timeout = setTimeout(() => {
-      logger.error('❌ Redis connection timeout');
+      logger.error('❌ Redis connection timeout after 10 seconds');
       safeResolve(false);
-    }, 5000);
+    }, 10000);
   });
 }
 
