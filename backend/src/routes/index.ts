@@ -88,7 +88,7 @@ router.post('/search/youtube', apiRateLimiter, (req, res) => {
 });
 
 // Health check
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

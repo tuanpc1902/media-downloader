@@ -3,9 +3,9 @@ import { logger } from '../utils/logger';
 
 export function errorHandler(
   err: Error,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   logger.error(`Error: ${err.message}`, { stack: err.stack });
 

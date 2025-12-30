@@ -7,7 +7,7 @@ import { getIO } from '../websocket';
 import { ProgressUpdate } from '../types';
 import { jobStore } from '../services/jobStore';
 import fs from 'fs';
-import path from 'path';
+// import path from 'path'; // Unused for now
 
 interface DownloadJobData {
   jobId: string;
@@ -34,7 +34,7 @@ export function createDownloadWorker(): Worker {
   const worker = new Worker<DownloadJobData>(
     'downloads',
     async (job: Job<DownloadJobData>) => {
-      const { jobId, url, format, outputPath, outputFormat, audioOnly } = job.data;
+      const { jobId, url, format, outputPath, audioOnly } = job.data;
 
       // Log title để debug
       logger.info(`Processing download job: ${jobId}`, {

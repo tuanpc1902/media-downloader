@@ -113,7 +113,7 @@ function checkCommand(command: string, args: string[]): Promise<boolean> {
       }
     });
 
-    childProcess.on('error', (error) => {
+    childProcess.on('error', (_error) => {
       if (!resolved) {
         resolved = true;
         clearTimeout(timeout);

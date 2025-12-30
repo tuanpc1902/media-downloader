@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { tiktokDownloadQueue } from '../queue';
 import { logger } from '../utils/logger';
-import { config } from '../config';
+// import { config } from '../config'; // Unused for now
 import { createOutputPath } from '../utils/filename';
 import { analyzeVideo } from '../utils/downloader';
 import { tiktokJobStore } from './tiktok-job-store';

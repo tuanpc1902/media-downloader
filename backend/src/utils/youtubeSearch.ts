@@ -1,7 +1,7 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import { getYtdlpCommand } from './downloader';
 import { logger } from './logger';
-import { VideoInfo } from '../types';
+// import { VideoInfo } from '../types'; // Unused for now
 
 // MediaInfo interface for search results
 interface MediaInfo {

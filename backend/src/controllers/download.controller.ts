@@ -9,7 +9,7 @@ import path from 'path';
 import fs from 'fs';
 import { config } from '../config';
 import { BatchDownloadRequest, BatchDownloadResponse } from '../types';
-import { validateYouTubeUrls, parseUrlsFromText } from '../utils/urlValidator';
+import { validateYouTubeUrls } from '../utils/urlValidator';
 
 const downloadService = new DownloadService();
 const analyzeService = new AnalyzeService();
@@ -305,7 +305,7 @@ export class DownloadController {
       // Tạo job mới với cùng params và resume flag
       // Sử dụng cùng outputPath để resume từ file .part
       const newJobId = uuidv4();
-      const newJob = await downloadQueue.add(
+      await downloadQueue.add(
         `download-${newJobId}`,
         {
           ...jobData,

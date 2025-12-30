@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
-import { DownloadRequest, DownloadJob, JobStatus } from '../types';
+import { DownloadRequest, DownloadJob } from '../types';
 import { downloadQueue } from '../queue';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import { createOutputPath } from '../utils/filename';
 import { analyzeVideo } from '../utils/downloader';
-import path from 'path';
+// import path from 'path'; // Unused for now
 import fs from 'fs';
 
 export class DownloadService {
@@ -75,7 +75,7 @@ export class DownloadService {
       url: request.url,
       title: videoTitle, // Lưu title vào job
       status: 'pending',
-      format: request.format,
+      format: request.format || 'best',
       progress: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -123,15 +123,15 @@ export class DownloadService {
   /**
    * Lấy extension từ output format
    */
-  private getExtension(format: string): string {
-    const formatMap: Record<string, string> = {
-      'mp4': 'mp4',
-      'webm': 'webm',
-      'mp3': 'mp3',
-      'webm-opus': 'webm',
-    };
-    return formatMap[format] || 'mp4';
-  }
+  // private getExtension(format: string): string { // Unused for now
+  //   const formatMap: Record<string, string> = {
+  //     'mp4': 'mp4',
+  //     'webm': 'webm',
+  //     'mp3': 'mp3',
+  //     'webm-opus': 'webm',
+  //   };
+  //   return formatMap[format] || 'mp4';
+  // }
 
   /**
    * Format yt-dlp format string
