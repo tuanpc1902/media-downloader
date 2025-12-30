@@ -36,7 +36,6 @@ services:
           property: connectionString
         required: false
       - key: FRONTEND_URL
-        sync: false
         value: media-downloader-orcin.vercel.app
       - key: DOWNLOAD_DIR
         value: /opt/render/project/src/downloads
