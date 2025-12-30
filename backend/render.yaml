@@ -31,7 +31,7 @@ services:
           property: password
       - key: FRONTEND_URL
         sync: false
-        value: https://your-frontend.vercel.app
+        value: media-downloader-orcin.vercel.app
       - key: DOWNLOAD_DIR
         value: /opt/render/project/src/downloads
       - key: LOG_FILE

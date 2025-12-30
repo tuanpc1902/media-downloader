@@ -24,8 +24,8 @@ Project này gồm 2 phần:
 
 Tạo file `frontend/.env.production`:
 ```env
-VITE_API_URL=https://your-backend.onrender.com/api
-VITE_WS_URL=wss://your-backend.onrender.com
+VITE_API_URL=https://media-downloader-k0m9.onrender.com/api
+VITE_WS_URL=wss://media-downloader-k0m9.onrender.com/
 ```
 
 2. **Đảm bảo build script hoạt động**
