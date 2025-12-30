@@ -4,11 +4,13 @@
 
 Project này gồm 2 phần:
 - **Frontend**: React app có thể deploy lên Vercel/Netlify
-- **Backend**: Node.js server cần deploy riêng (Railway/Render) vì cần Redis, yt-dlp, FFmpeg
+- **Backend**: Node.js server cần deploy riêng (Render/Railway) vì cần Redis, yt-dlp, FFmpeg
+
+**Khuyến nghị**: Sử dụng **Render** cho backend (dễ cấu hình, hỗ trợ tốt system packages)
 
 ## 🎯 Chiến lược Deploy
 
-### Option 1: Frontend trên Vercel/Netlify + Backend trên Railway/Render (Khuyến nghị)
+### Option 1: Frontend trên Vercel/Netlify + Backend trên Render (Khuyến nghị)
 
 ### Option 2: Full-stack trên Vercel (Frontend + Serverless Functions - phức tạp hơn)
 
@@ -22,8 +24,8 @@ Project này gồm 2 phần:
 
 Tạo file `frontend/.env.production`:
 ```env
-VITE_API_URL=https://your-backend-url.railway.app/api
-VITE_WS_URL=wss://your-backend-url.railway.app
+VITE_API_URL=https://your-backend.onrender.com/api
+VITE_WS_URL=wss://your-backend.onrender.com
 ```
 
 2. **Đảm bảo build script hoạt động**
@@ -106,7 +108,7 @@ netlify deploy --prod
 
 ---
 
-## 🔧 Deploy Backend lên Railway
+## 🔧 Deploy Backend lên Render (Khuyến nghị)
 
 Railway hỗ trợ tốt cho Node.js apps với Redis và có thể cài đặt yt-dlp/FFmpeg.
 
@@ -211,53 +213,104 @@ Nếu gặp lỗi với Nixpacks, bạn có thể sử dụng Dockerfile:
 
 ## 🔧 Deploy Backend lên Render
 
+Render là một platform tốt cho Node.js apps với hỗ trợ Redis và có thể cài đặt system packages.
+
 ### Bước 1: Chuẩn bị
 
-Tạo `backend/render.yaml`:
-```yaml
-services:
-  - type: web
-    name: yt-downloader-backend
-    env: node
-    buildCommand: pip install yt-dlp && npm install && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3001
-      - key: REDIS_HOST
-        fromDatabase:
-          name: redis
-          property: host
-      - key: REDIS_PORT
-        fromDatabase:
-          name: redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromDatabase:
-          name: redis
-          property: password
+File `backend/render.yaml` đã được cấu hình sẵn với:
+- Build command cài đặt Python, FFmpeg, yt-dlp
+- Cấu hình Redis database
+- Environment variables cần thiết
 
-databases:
-  - name: redis
-    databaseName: redis
-    plan: free
-    type: redis
-```
+### Bước 2: Deploy qua Render Dashboard
 
-### Bước 2: Deploy
+1. **Truy cập [render.com](https://render.com)** và đăng nhập
 
-1. Truy cập [render.com](https://render.com)
-2. New → Web Service
-3. Connect GitHub repository
-4. Cấu hình:
-   - **Root Directory**: `backend`
-   - **Build Command**: `pip install yt-dlp && npm install && npm run build`
-   - **Start Command**: `npm start`
-5. Add Redis Database (New → Redis)
-6. Thêm Environment Variables
-7. Deploy
+2. **New → Blueprint** (nếu muốn dùng render.yaml tự động) hoặc **New → Web Service**
+
+3. **Nếu dùng Blueprint:**
+   - Connect GitHub repository
+   - Render sẽ tự động detect `backend/render.yaml`
+   - Click "Apply" để deploy
+
+4. **Nếu dùng Web Service (manual):**
+   - Connect GitHub repository
+   - Cấu hình:
+     - **Name**: `yt-downloader-backend`
+     - **Root Directory**: `backend`
+     - **Environment**: `Node`
+     - **Build Command**: 
+       ```bash
+       apt-get update && apt-get install -y python3 python3-pip ffmpeg && pip3 install --upgrade pip && pip3 install yt-dlp && npm install && npm run build
+       ```
+     - **Start Command**: `npm start`
+     - **Plan**: Starter ($7/month) hoặc Free (có giới hạn)
+
+5. **Add Redis Database:**
+   - New → Redis
+   - Name: `redis`
+   - Plan: Free (hoặc Starter nếu cần)
+   - Click "Create"
+
+6. **Cấu hình Environment Variables:**
+   Trong Web Service → Environment:
+   ```
+   NODE_ENV=production
+   PORT=3001
+   REDIS_HOST=<từ Redis service>
+   REDIS_PORT=<từ Redis service>
+   REDIS_PASSWORD=<từ Redis service>
+   FRONTEND_URL=https://your-frontend.vercel.app
+   DOWNLOAD_DIR=/opt/render/project/src/downloads
+   LOG_FILE=/opt/render/project/src/logs/app.log
+   ```
+   
+   **Lưu ý**: Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` nếu bạn link Redis service.
+
+7. **Link Redis Service:**
+   - Trong Web Service → Settings → Environment
+   - Add Environment Variable → Link from Redis
+   - Chọn Redis service đã tạo
+
+8. **Deploy:**
+   - Click "Save Changes"
+   - Render sẽ tự động build và deploy
+
+### Bước 3: Cấu hình Custom Domain (Optional)
+
+1. Trong Web Service → Settings → Custom Domains
+2. Add domain của bạn
+3. Follow DNS instructions
+
+### Bước 4: Troubleshooting
+
+**Nếu build fail:**
+
+1. **Kiểm tra Root Directory:**
+   - Đảm bảo Root Directory là `backend` (không phải root của repo)
+
+2. **Kiểm tra Build Command:**
+   - Render cần quyền sudo để cài system packages
+   - Build command phải cài Python, FFmpeg trước khi cài yt-dlp
+
+3. **Kiểm tra Logs:**
+   - Xem build logs trong Render Dashboard
+   - Kiểm tra runtime logs nếu service không start
+
+4. **Kiểm tra Redis Connection:**
+   - Đảm bảo Redis service đã được link
+   - Kiểm tra environment variables `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+
+5. **Disk Space:**
+   - Free plan có giới hạn disk space
+   - Downloads folder có thể nhanh chóng hết dung lượng
+   - Consider sử dụng external storage hoặc cleanup old files
+
+**Lưu ý quan trọng:**
+- Render Free plan có **sleep mode** - service sẽ sleep sau 15 phút không có traffic
+- Starter plan ($7/month) không có sleep mode
+- Downloads folder sẽ bị xóa khi service restart (ephemeral storage)
+- Consider sử dụng external storage (S3, etc.) cho production
 
 ---
 
@@ -378,7 +431,8 @@ server {
 1. **Free Tier Limits**: 
    - Vercel: 100GB bandwidth/month
    - Netlify: 100GB bandwidth/month
-   - Railway: $5 credit/month
+   - Render: Free plan có sleep mode, Starter $7/month (Khuyến nghị)
+   - Railway: $5 credit/month (Alternative)
    - Render: Free tier có giới hạn
 
 2. **Cost Optimization**:

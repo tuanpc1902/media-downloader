@@ -2,8 +2,16 @@ services:
   - type: web
     name: yt-downloader-backend
     env: node
-    buildCommand: pip install yt-dlp && npm install && npm run build
+    region: singapore
+    plan: starter
+    buildCommand: |
+      apt-get update && apt-get install -y python3 python3-pip ffmpeg
+      pip3 install --upgrade pip
+      pip3 install yt-dlp
+      npm install
+      npm run build
     startCommand: npm start
+    rootDir: backend
     envVars:
       - key: NODE_ENV
         value: production
@@ -23,6 +31,11 @@ services:
           property: password
       - key: FRONTEND_URL
         sync: false
+        value: https://your-frontend.vercel.app
+      - key: DOWNLOAD_DIR
+        value: /opt/render/project/src/downloads
+      - key: LOG_FILE
+        value: /opt/render/project/src/logs/app.log
 
 databases:
   - name: redis
