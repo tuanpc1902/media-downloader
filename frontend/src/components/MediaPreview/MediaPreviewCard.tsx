@@ -156,7 +156,7 @@ export function MediaPreviewCard({
           videoInfo={video}
           videoUrl={url}
           onDownloadStart={() => {
-            // FormatSelector handles the download, just call the callback
+            // FormatSelector handles the download, just call the callback with default options
             onDownloadStart({
               audioOnly: defaultAudioOnly,
               quality: '720p',

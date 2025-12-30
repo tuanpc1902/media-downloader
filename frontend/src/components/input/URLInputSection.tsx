@@ -3,6 +3,7 @@ import { Search, X, Upload, AlertCircle, CheckCircle, Copy } from 'lucide-react'
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { cn } from '../../utils/cn';
+import { PlatformType } from '../../types';
 
 export type Platform = 'youtube' | 'soundcloud' | 'tiktok' | 'unknown';
 

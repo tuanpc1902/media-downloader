@@ -1,5 +1,5 @@
 import { DownloadJob, JobStatus } from '../../types';
-import { Download, X, CheckCircle, AlertCircle, Loader2, FileDown, RotateCcw, Copy, FolderOpen, MoreVertical } from 'lucide-react';
+import { Download, X, CheckCircle, AlertCircle, FileDown, RotateCcw, Copy, FolderOpen, MoreVertical } from 'lucide-react';
 import { downloadFile, cancelDownload } from '../../services/api';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { showToast } from '../Toast';

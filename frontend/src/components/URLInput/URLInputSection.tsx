@@ -56,25 +56,25 @@ export function URLInputSection({ onAnalyzeComplete, onError }: URLInputSectionP
     setValidations(newValidations);
   };
 
-  const handlePaste = useCallback((e: ClipboardEvent) => {
-    const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
-    if (paste && textareaRef.current) {
-      // Check if textarea is focused
-      if (document.activeElement === textareaRef.current) {
-        return; // Let default paste handle it
-      }
-      
-      // If textarea has selection, insert at cursor
-      const textarea = textareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const currentValue = urls;
-      
-      const newValue = currentValue.slice(0, start) + paste + currentValue.slice(end);
-      handleInputChange(newValue);
-      e.preventDefault();
-    }
-  }, [urls]);
+  // const handlePaste = useCallback((e: ClipboardEvent) => { // Unused for now
+  //   const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+  //   if (paste && textareaRef.current) {
+  //     // Check if textarea is focused
+  //     if (document.activeElement === textareaRef.current) {
+  //       return; // Let default paste handle it
+  //     }
+  //     
+  //     // If textarea has selection, insert at cursor
+  //     const textarea = textareaRef.current;
+  //     const start = textarea.selectionStart;
+  //     const end = textarea.selectionEnd;
+  //     const currentValue = urls;
+  //     
+  //     const newValue = currentValue.slice(0, start) + paste + currentValue.slice(end);
+  //     handleInputChange(newValue);
+  //     e.preventDefault();
+  //   }
+  // }, [urls]);
 
   const handleDrag = useCallback((e: DragEvent) => {
     e.preventDefault();

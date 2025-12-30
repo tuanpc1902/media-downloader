@@ -44,11 +44,11 @@ export function VideoDownloadPage() {
     }
   };
 
-  const handleError = (err: string) => {
-    setError(err);
-    setVideoInfo(null);
-    setPlaylistInfo(null);
-  };
+  // const handleError = (err: string) => { // Unused for now
+  //   setError(err);
+  //   setVideoInfo(null);
+  //   setPlaylistInfo(null);
+  // };
 
   const handleDownloadStart = () => {
     setShowDownloads(true);
