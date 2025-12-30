@@ -88,8 +88,54 @@ router.post('/search/youtube', apiRateLimiter, (req, res) => {
 });
 
 // Health check
-router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+router.get('/health', async (_req, res) => {
+  try {
+    const { checkRedisHealth, isRedisAvailable } = await import('../lib/redis');
+    const redisHealth = await checkRedisHealth();
+    
+    res.json({
+      status: 'ok',
+      redis: isRedisAvailable() ? 'connected' : 'disconnected',
+      redisDetails: redisHealth,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// Redis health check (detailed)
+router.get('/health/redis', async (_req, res) => {
+  try {
+    const { checkRedisHealth, isRedisAvailable } = await import('../lib/redis');
+    const redisHealth = await checkRedisHealth();
+    
+    res.json({
+      status: isRedisAvailable() ? 'ok' : 'error',
+      redis: {
+        ...redisHealth.config,
+        connected: redisHealth.available,
+        status: redisHealth.status,
+      },
+      envVars: {
+        REDIS_HOST: process.env.REDIS_HOST || 'NOT SET',
+        REDIS_PORT: process.env.REDIS_PORT || 'NOT SET',
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD ? 'SET' : 'NOT SET',
+        REDIS_URL: process.env.REDIS_URL ? 'SET' : 'NOT SET',
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 export default router;

@@ -9,8 +9,10 @@ export const config = {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   },
   redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    // Note: Redis config is now handled in src/lib/redis.ts
+    // These are kept for backward compatibility but not used directly
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : undefined,
     // Handle empty string as undefined (Render may set empty string)
     password: process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.trim() !== '' 
       ? process.env.REDIS_PASSWORD 

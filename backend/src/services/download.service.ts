@@ -84,6 +84,12 @@ export class DownloadService {
     // Format yt-dlp format string
     const ytdlpFormat = this.formatYtdlpFormat(request);
 
+    // Check Redis availability before adding job
+    const { isRedisAvailable } = await import('../lib/redis');
+    if (!isRedisAvailable()) {
+      throw new Error('Redis is not available. Download queue is disabled. Please check Redis connection.');
+    }
+    
     // Thêm job vào queue
     await downloadQueue.add(
       `download-${jobId}`,

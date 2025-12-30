@@ -253,36 +253,65 @@ File `backend/render.yaml` đã được cấu hình sẵn với:
    - Click "Create"
 
 6. **Cấu hình Environment Variables:**
-   Trong Web Service → Settings → Environment:
    
-   **Quan trọng**: Nếu dùng Blueprint (render.yaml), các env vars sẽ được tự động set từ Redis service.
+   **QUAN TRỌNG**: Render Blueprint (render.yaml) sẽ tự động link Redis, nhưng bạn vẫn cần verify:
    
-   Nếu deploy manual, bạn cần:
-   - Link Redis service: Add Environment Variable → Link from Redis → Chọn Redis service
-   - Hoặc set manually:
-     ```
-     NODE_ENV=production
-     PORT=3001
-     REDIS_HOST=<từ Redis service Info tab>
-     REDIS_PORT=<từ Redis service Info tab>
-     REDIS_PASSWORD=<từ Redis service Info tab>
-     FRONTEND_URL=https://your-frontend.vercel.app
-     DOWNLOAD_DIR=/opt/render/project/src/downloads
-     LOG_FILE=/opt/render/project/src/logs/app.log
-     ```
+   **Cách 1: Dùng Blueprint (render.yaml) - Khuyến nghị**
+   - File `backend/render.yaml` đã được cấu hình sẵn
+   - Khi deploy Blueprint, Render sẽ tự động:
+     - Tạo Redis service
+     - Link Redis service với Web Service
+     - Inject environment variables
+   - **Verify**: Sau khi deploy, vào Web Service → Environment, phải thấy:
+     - `REDIS_HOST` (không phải localhost)
+     - `REDIS_PORT` 
+     - `REDIS_PASSWORD` (có thể empty)
+   
+   **Cách 2: Manual Link (nếu Blueprint không tự động link)**
+   - Trong Web Service → Settings → Environment
+   - Click "Add Environment Variable"
+   - Chọn "Link from Redis" (không phải manual input)
+   - Chọn Redis service đã tạo
+   - Render sẽ tự động thêm `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+   
+   **Các env vars khác cần set:**
+   ```
+   NODE_ENV=production
+   PORT=3001
+   FRONTEND_URL=https://your-frontend.vercel.app
+   DOWNLOAD_DIR=/opt/render/project/src/downloads
+   LOG_FILE=/opt/render/project/src/logs/app.log
+   ```
    
    **Lưu ý**: 
    - Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` khi link Redis service
    - Nếu password là empty, code sẽ handle đúng
    - Có thể dùng `REDIS_URL` nếu Redis service cung cấp connection string
+   - **Nếu vẫn thấy localhost:6379 trong logs**: Redis chưa được link đúng
 
-7. **Link Redis Service (QUAN TRỌNG):**
-   - Trong Web Service → Settings → Environment
-   - Click "Add Environment Variable"
-   - Chọn "Link from Redis" (không phải manual input)
-   - Chọn Redis service đã tạo ở bước 5
-   - Render sẽ tự động thêm `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-   - **Lưu ý**: Nếu không link, service sẽ không thể kết nối Redis
+7. **Link Redis Service (QUAN TRỌNG - BẮT BUỘC):**
+   
+   **Nếu dùng Blueprint**: Blueprint có thể không tự động link Redis. Bạn cần verify và link manually nếu cần.
+   
+   **Cách link Redis:**
+   1. Vào Web Service → Settings → Environment
+   2. Scroll xuống phần "Linked Services" hoặc "Environment Variables"
+   3. Click "Add Environment Variable"
+   4. Chọn "Link from Redis" (không phải manual input)
+   5. Chọn Redis service đã tạo ở bước 5
+   6. Render sẽ tự động thêm:
+      - `REDIS_HOST` = hostname từ Redis (ví dụ: `d-redis-xxx.render.com`)
+      - `REDIS_PORT` = port (thường 6379)
+      - `REDIS_PASSWORD` = password từ Redis (có thể empty)
+   
+   **Verify sau khi link:**
+   - Trong Environment tab, phải thấy `REDIS_HOST` có giá trị (không phải localhost)
+   - Nếu vẫn thấy localhost, Redis chưa được link đúng
+   
+   **Nếu vẫn lỗi sau khi link:**
+   - Restart service: Manual Deploy → Clear build cache & deploy
+   - Kiểm tra Redis service đang running
+   - Xem logs để xem chi tiết lỗi
 
 8. **Deploy:**
    - Click "Save Changes"
@@ -310,8 +339,30 @@ File `backend/render.yaml` đã được cấu hình sẵn với:
    - Kiểm tra runtime logs nếu service không start
 
 4. **Kiểm tra Redis Connection:**
-   - Đảm bảo Redis service đã được link
-   - Kiểm tra environment variables `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+   
+   **Lỗi thường gặp**: `Redis connection failed. Please make sure Redis is running at localhost:6379`
+   
+   **Nguyên nhân**: Environment variables chưa được set hoặc Redis chưa được link
+   
+   **Cách fix:**
+   1. Vào Web Service → Settings → Environment
+   2. Kiểm tra có các biến sau không (phải có giá trị, không phải localhost):
+      - `REDIS_HOST` = `d-redis-xxx.render.com` (hoặc tương tự)
+      - `REDIS_PORT` = `6379`
+      - `REDIS_PASSWORD` = có thể empty
+   3. Nếu không thấy hoặc thấy localhost:
+      - Click "Add Environment Variable"
+      - Chọn "Link from Redis" (không phải manual input)
+      - Chọn Redis service
+      - Restart Web Service
+   4. Test connection: Truy cập `https://your-backend.onrender.com/api/health/redis`
+      - Nếu `connected: false`, xem `envVars` để biết biến nào chưa được set
+      - Nếu `connected: true`, Redis đã hoạt động
+   
+   **Kiểm tra Redis service:**
+   - Vào Redis service → Status phải là "Available"
+   - Nếu "Paused", click "Resume"
+   - Nếu "Error", xem logs và restart
 
 5. **Disk Space:**
    - Free plan có giới hạn disk space

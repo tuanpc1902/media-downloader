@@ -302,6 +302,15 @@ export class DownloadController {
         return;
       }
 
+      // Check Redis availability
+      const { isRedisAvailable } = await import('../lib/redis');
+      if (!isRedisAvailable()) {
+        res.status(503).json({ 
+          error: 'Redis is not available. Download queue is disabled. Please check Redis connection and try again later.' 
+        });
+        return;
+      }
+      
       // Tạo job mới với cùng params và resume flag
       // Sử dụng cùng outputPath để resume từ file .part
       const newJobId = uuidv4();

@@ -105,6 +105,12 @@ export class TikTokDownloadService {
     });
     
     // Enqueue job
+    // Check Redis availability before adding job
+    const { isRedisAvailable } = await import('../lib/redis');
+    if (!isRedisAvailable()) {
+      throw new Error('Redis is not available. Download queue is disabled. Please check Redis connection.');
+    }
+    
     await tiktokDownloadQueue.add('download-tiktok', {
       jobId,
       url: normalizedUrl, // Use normalized URL
