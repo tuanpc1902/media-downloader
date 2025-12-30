@@ -28,5 +28,5 @@ databases:
   - name: redis
     databaseName: redis
     plan: free
-    type: redis
+    # type: redis
 
