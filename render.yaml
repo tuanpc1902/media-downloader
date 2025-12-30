@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: yt-downloader-backend
+    env: node
+    region: singapore
+    plan: starter
+    buildCommand: |
+      sudo apt-get update && sudo apt-get install -y python3 python3-pip ffmpeg
+      pip3 install --upgrade pip
+      pip3 install yt-dlp
+      npm install
+      npm run build
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: REDIS_HOST
+        fromDatabase:
+          name: redis
+          property: host
+      - key: REDIS_PORT
+        fromDatabase:
+          name: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromDatabase:
+          name: redis
+          property: password
+      # Alternative: Use REDIS_URL if available (some Redis services provide this)
+      - key: REDIS_URL
+        fromDatabase:
+          name: redis
+          property: connectionString
+        required: false
+      - key: FRONTEND_URL
+        sync: false
+        value: media-downloader-orcin.vercel.app
+      - key: DOWNLOAD_DIR
+        value: /opt/render/project/src/downloads
+      - key: LOG_FILE
+        value: /opt/render/project/src/logs/app.log
+
+databases:
+  - name: redis
+    databaseName: redis
+    plan: free
+    type: redis
+

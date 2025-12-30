@@ -247,10 +247,16 @@ File `backend/render.yaml` đã được cấu hình sẵn với:
      - **Plan**: Starter ($7/month) hoặc Free (có giới hạn)
 
 5. **Add Redis Database:**
+   
+   **Xem hướng dẫn chi tiết:** [backend/REDIS_DEPLOY_RENDER.md](./backend/REDIS_DEPLOY_RENDER.md)
+   
+   **Tóm tắt:**
    - New → Redis
    - Name: `redis`
-   - Plan: Free (hoặc Starter nếu cần)
+   - Plan: Free (development) hoặc Starter ($10/month, production)
+   - Region: Chọn cùng region với Web Service
    - Click "Create"
+   - Đợi status = "Available" (màu xanh)
 
 6. **Cấu hình Environment Variables:**
    
@@ -282,6 +288,16 @@ File `backend/render.yaml` đã được cấu hình sẵn với:
    DOWNLOAD_DIR=/opt/render/project/src/downloads
    LOG_FILE=/opt/render/project/src/logs/app.log
    ```
+   
+   **Lưu ý về Redis:**
+   - Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` khi link Redis service
+   - Bạn KHÔNG cần set manual các biến này nếu đã link Redis service
+   - Nếu muốn dùng `REDIS_URL` thay vì individual vars, bạn có thể set manual:
+     ```
+     REDIS_URL=redis://:password@d-redis-xxx.render.com:6379
+     ```
+   - **Priority**: `REDIS_URL` > `REDIS_HOST` + `REDIS_PORT`
+   - Nếu không có Redis config trong production, app vẫn start nhưng queue features sẽ disabled
    
    **Lưu ý**: 
    - Render tự động inject `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` khi link Redis service
