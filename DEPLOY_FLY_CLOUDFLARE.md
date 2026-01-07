@@ -61,7 +61,7 @@ fly redis create
 ```bash
 # Required
 fly secrets set NODE_ENV=production
-fly secrets set FRONTEND_URL=https://your-frontend.pages.dev
+fly secrets set FRONTEND_URL=https://media-downloader-brc.pages.dev
 
 # Redis (if using)
 fly secrets set REDIS_URL=redis://...
@@ -70,6 +70,10 @@ fly secrets set REDIS_URL=redis://...
 fly secrets set LOG_LEVEL=info
 fly secrets set MAX_CONCURRENT_DOWNLOADS=3
 ```
+
+**⚠️ Lưu ý**: 
+- Frontend URL: `https://media-downloader-brc.pages.dev` (không có trailing slash)
+- URL này sẽ được dùng cho CORS settings trong backend
 
 ### Bước 6: Deploy
 

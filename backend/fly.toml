@@ -1,9 +1,10 @@
 # Fly.io configuration for backend
-app = "your-app-name-backend"
-primary_region = "iad"
+app = "media-downloader-uge-da"
+primary_region = "nrt"
 
 [build]
   dockerfile = "Dockerfile"
+  build_context = "."
 
 [env]
   NODE_ENV = "production"

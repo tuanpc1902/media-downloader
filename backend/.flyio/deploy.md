@@ -3,22 +3,28 @@
 ## Prerequisites
 1. Install Fly CLI: https://fly.io/docs/getting-started/installing-flyctl/
 2. Login: `fly auth login`
-3. Create app: `fly apps create your-app-name-backend`
+3. App name: `media-downloader-uge-da` (đã được tạo, check trong fly.toml)
 
 ## Initial Setup
 
-1. **Update fly.toml**
-   - Change `app = "your-app-name-backend"` to your actual app name
-   - Adjust `primary_region` if needed (e.g., "iad", "sjc", "lhr")
+1. **Check fly.toml**
+   - App name: `media-downloader-uge-da` (đã config sẵn)
+   - Primary region: `nrt` (có thể đổi nếu cần)
 
 2. **Set Environment Variables**
    ```bash
+   # Required
    fly secrets set NODE_ENV=production
-   fly secrets set FRONTEND_URL=https://your-frontend.pages.dev
-   fly secrets set REDIS_URL=redis://your-redis-url:6379
-   # Optional: Set Redis password
-   fly secrets set REDIS_PASSWORD=your-password
+   fly secrets set FRONTEND_URL=https://media-downloader-brc.pages.dev
+   
+   # Redis (Optional but recommended)
+   # fly secrets set REDIS_URL=redis://your-redis-url:6379
+   # fly secrets set REDIS_PASSWORD=your-password
    ```
+   
+   **⚠️ QUAN TRỌNG**: 
+   - Frontend URL: `https://media-downloader-brc.pages.dev` (không có trailing slash)
+   - URL này sẽ được dùng cho CORS settings
 
 3. **Deploy**
    ```bash

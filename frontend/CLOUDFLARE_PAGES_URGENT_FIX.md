@@ -32,25 +32,31 @@ wrangler versions upload
 
 ### Option 2: Deploy từ CLI (100% chắc chắn work)
 
-Nếu dashboard vẫn không work, dùng CLI:
+**⚠️ QUAN TRỌNG**: Nếu gặp lỗi authentication, unset API token và dùng OAuth:
 
 ```bash
-# 1. Install Wrangler CLI
+# 1. Unset API token (nếu có)
+# Windows PowerShell
+Remove-Item Env:\CLOUDFLARE_API_TOKEN
+
+# 2. Install Wrangler CLI (nếu chưa)
 npm install -g wrangler
 
-# 2. Login
+# 3. Login với OAuth (KHÔNG dùng API token)
 wrangler login
 
-# 3. Build project
+# 4. Build project
 cd frontend
 npm install
 npm run build
 
-# 4. Deploy với Pages command (KHÔNG phải Workers!)
+# 5. Deploy với Pages command (KHÔNG phải Workers!)
 wrangler pages deploy dist --project-name=your-project-name
 ```
 
-**Lưu ý**: Dùng `wrangler pages deploy` (Pages), KHÔNG phải `wrangler deploy` (Workers)!
+**Lưu ý**: 
+- Dùng `wrangler pages deploy` (Pages), KHÔNG phải `wrangler deploy` (Workers)!
+- Nếu vẫn lỗi auth, xem `frontend/FIX_API_TOKEN_NOW.md`
 
 ### Option 3: Tạo project mới với CLI
 

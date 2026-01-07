@@ -10,11 +10,30 @@ npm install -g wrangler
 
 ## Bước 2: Login
 
+### Option A: OAuth Login (Recommended)
+
 ```bash
 wrangler login
 ```
 
 Browser sẽ mở để login Cloudflare account.
+
+### Option B: API Token
+
+Nếu dùng API token, đảm bảo token có quyền:
+- `Cloudflare Pages` → `Edit`
+- `Account Settings` → `Read`
+
+Set token:
+```bash
+# Windows PowerShell
+$env:CLOUDFLARE_API_TOKEN="your-token"
+
+# Linux/Mac
+export CLOUDFLARE_API_TOKEN="your-token"
+```
+
+**Lưu ý**: Nếu gặp lỗi authentication, dùng OAuth login thay vì API token.
 
 ## Bước 3: Build Project
 
