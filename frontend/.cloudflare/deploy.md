@@ -44,17 +44,25 @@ Nếu build fail, có thể cần set Node.js version:
 
 ## Troubleshooting
 
-### Error: "wrangler versions upload"
-**Nguyên nhân**: Cloudflare Pages đang detect project như Workers project
+### Error: "wrangler versions upload" hoặc "Workers-specific command in Pages project"
+**Nguyên nhân**: 
+- Cloudflare Pages đang detect project như Workers project
+- Có thể do file `wrangler.toml` trong frontend folder
 
 **Giải pháp**:
-1. Vào Pages → Your project → Settings → Builds & deployments
-2. Xóa build settings hiện tại
-3. Set lại:
+1. **XÓA file `wrangler.toml` nếu có**:
+   ```bash
+   rm frontend/wrangler.toml
+   ```
+   Commit và push lại.
+
+2. Vào Pages → Your project → Settings → Builds & deployments
+3. Xóa build settings hiện tại
+4. Set lại:
    - Framework preset: `Vite` hoặc `None`
    - Build command: `npm run build`
    - Output directory: `dist`
-4. Save và trigger lại deployment
+5. Save và trigger lại deployment
 
 ### Build fails với TypeScript errors
 - Check Node.js version (nên dùng 18 hoặc 20)

@@ -33,18 +33,18 @@ wrangler versions upload
 
 5. **Save và trigger lại deployment**
 
-### Cách 2: Tạo wrangler.toml để force Pages mode
+### Cách 2: Xóa wrangler.toml (Nếu có)
 
-Nếu cách 1 không work, tạo file `wrangler.toml` trong root của project (không phải frontend folder):
+**⚠️ QUAN TRỌNG**: Nếu có file `wrangler.toml` trong frontend folder, **XÓA NÓ NGAY**!
 
-```toml
-# wrangler.toml (trong root project, KHÔNG phải frontend/)
-# File này để force Cloudflare Pages mode
+File này khiến Cloudflare detect nhầm project như Workers project.
 
-pages_build_output_dir = "frontend/dist"
+```bash
+# Xóa file wrangler.toml
+rm frontend/wrangler.toml
 ```
 
-**Lưu ý**: File này chỉ để force Pages mode, không phải Workers config.
+Cloudflare Pages **KHÔNG CẦN** wrangler.toml cho Vite projects.
 
 ### Cách 3: Deploy từ CLI
 
@@ -90,7 +90,9 @@ Sau khi fix, đảm bảo:
 
 ## 📝 Notes
 
-- Cloudflare Pages KHÔNG cần `wrangler.toml` cho Vite projects
+- **⚠️ QUAN TRỌNG**: Cloudflare Pages KHÔNG cần `wrangler.toml` cho Vite projects
+- **XÓA** file `wrangler.toml` nếu có trong frontend folder (nó sẽ khiến Cloudflare detect nhầm như Workers)
 - File `_redirects` trong `public/` đã được tạo để handle SPA routing
 - File `_headers` trong `public/` đã được tạo cho security headers
+- Cloudflare Pages sẽ tự động detect Vite project và build đúng cách
 
