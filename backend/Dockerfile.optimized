@@ -1,4 +1,16 @@
-# Multi-stage build for optimized production image
+# Alternative optimized Dockerfile with better caching
+# Use this if you want even smaller image size
+
+FROM node:18-slim AS deps
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
 FROM node:18-slim AS builder
 
 # Install build dependencies
@@ -13,22 +25,18 @@ RUN set -eux; \
 
 WORKDIR /app
 
-# Copy package files
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./
-
-# Install all dependencies (including devDependencies for build)
-RUN npm ci
-
-# Copy source code
-COPY . .
+COPY tsconfig.json ./
+COPY src ./src
 
 # Build TypeScript
 RUN npm run build
 
-# Production stage
 FROM node:18-slim AS production
 
-# Install runtime dependencies only
+# Install runtime dependencies
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -40,7 +48,6 @@ RUN set -eux; \
         && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp
-# Use --break-system-packages for Python 3.11+
 RUN set -eux; \
     python3 -m pip install --no-cache-dir --break-system-packages --upgrade pip setuptools wheel; \
     python3 -m pip install --no-cache-dir --break-system-packages yt-dlp
@@ -53,25 +60,21 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built files from builder stage
+# Copy built files
 COPY --from=builder /app/dist ./dist
 
-# Create directories for downloads and logs
+# Create directories
 RUN mkdir -p downloads/completed downloads/jobs logs
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
 EXPOSE 3001
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:3001/api/health || exit 1
 
-# Start application
 CMD ["node", "dist/index.js"]
-
 
