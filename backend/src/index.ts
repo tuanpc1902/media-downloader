@@ -10,6 +10,7 @@ import { initializeRedis, isRedisAvailable, disconnectRedis } from './lib/redis'
 import { initializeWebSocket } from './websocket';
 import { createDownloadWorker } from './workers/download.worker';
 import { createTikTokDownloadWorker } from './workers/tiktok-download.worker';
+import { createFacebookDownloadWorker } from './workers/facebook-download.worker';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -59,6 +60,7 @@ async function bootstrap() {
     // Step 4: Start workers (only if Redis is available)
     let downloadWorker: ReturnType<typeof createDownloadWorker> | null = null;
     let tiktokWorker: ReturnType<typeof createTikTokDownloadWorker> | null = null;
+    let facebookWorker: ReturnType<typeof createFacebookDownloadWorker> | null = null;
     
     if (isRedisAvailable()) {
       try {
@@ -67,6 +69,9 @@ async function bootstrap() {
         
         tiktokWorker = createTikTokDownloadWorker();
         logger.info('✅ TikTok download worker started');
+        
+        facebookWorker = createFacebookDownloadWorker();
+        logger.info('✅ Facebook download worker started');
       } catch (error: any) {
         logger.error('Failed to start workers:', error.message);
         // Continue anyway - workers are optional if Redis fails later
@@ -93,6 +98,14 @@ async function bootstrap() {
           await tiktokWorker.close();
         } catch (error: any) {
           logger.error('Error closing TikTok worker:', error.message);
+        }
+      }
+      
+      if (facebookWorker) {
+        try {
+          await facebookWorker.close();
+        } catch (error: any) {
+          logger.error('Error closing Facebook worker:', error.message);
         }
       }
       

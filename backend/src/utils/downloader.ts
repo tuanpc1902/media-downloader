@@ -165,6 +165,7 @@ function buildYtdlpArgs(baseArgs: string[], url: string): string[] {
   
   // Detect platform từ URL
   const isTikTok = url.includes('tiktok.com');
+  const isFacebook = url.includes('facebook.com') || url.includes('fb.com') || url.includes('m.facebook.com');
   const isSoundCloud = url.includes('soundcloud.com');
   
   // Apply platform-specific options
@@ -193,6 +194,20 @@ function buildYtdlpArgs(baseArgs: string[], url: string): string[] {
     }
     
     // Add timeout để tránh hang
+    args.push('--socket-timeout', '30');
+  } else if (isFacebook) {
+    // Facebook options
+    if (config.ytdlp.userAgent) {
+      args.push('--user-agent', config.ytdlp.userAgent);
+    }
+    // Set referer to Facebook
+    args.push('--referer', config.ytdlp.referer || 'https://www.facebook.com/');
+    
+    // Facebook-specific headers
+    args.push('--add-header', 'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+    args.push('--add-header', 'Accept-Language:en-US,en;q=0.9');
+    
+    // Add timeout
     args.push('--socket-timeout', '30');
   } else if (isSoundCloud) {
     // SoundCloud options
@@ -466,9 +481,6 @@ export function downloadVideo(
     }
 
     args.push(url);
-    
-    // Log command để debug
-    logger.info(`Downloading with: ${ytdlp.command} ${args.join(' ')}`);
 
     // Don't use shell mode to avoid argument splitting issues with spaces
     // Node.js spawn will properly escape arguments automatically when shell=false
@@ -585,7 +597,6 @@ export function downloadVideo(
             phase: 'downloading',
             message: 'Download hoàn tất',
           });
-          logger.debug(`Download completed, lastProgress set to 100%`);
         }
 
         // Parse merge progress: [Merger] Merging formats into "..."
@@ -604,7 +615,6 @@ export function downloadVideo(
             phase: 'postprocessing',
             message: 'Đang merge audio và video...',
           });
-          logger.debug(`Merge started, progress set to ${currentProgress}%`);
         }
 
         // Parse ffmpeg progress khi convert/merge
@@ -643,8 +653,7 @@ export function downloadVideo(
           if (options.videoDuration && options.videoDuration > 0) {
             convertProgress = Math.min(100, Math.max(0, Math.round((processedTime / options.videoDuration) * 100)));
             message = `Đang chuyển đổi audio (${convertProgress}%)`;
-            lastProgress = convertProgress; // Update lastProgress để giữ progress
-            logger.debug(`FFmpeg convert progress: ${convertProgress}% (${processedTime}s / ${options.videoDuration}s)`);
+            lastProgress = convertProgress;
           } else {
             // Nếu không có duration, dùng heuristic
             // Giả sử convert mất ~30% thời gian video (conservative estimate)
@@ -653,7 +662,6 @@ export function downloadVideo(
             convertProgress = Math.min(100, Math.max(95, Math.round((processedTime / estimatedConvertDuration) * 100)));
             message = `Đang chuyển đổi audio (${convertProgress}%)`;
             lastProgress = convertProgress;
-            logger.debug(`FFmpeg convert progress (estimated): ${convertProgress}% (${processedTime}s processed)`);
           }
           
           // Emit progress với % thực tế (không indeterminate vì đã có progress)
@@ -686,15 +694,13 @@ export function downloadVideo(
           if (options.videoDuration && options.videoDuration > 0) {
             mergeProgress = Math.min(100, Math.max(0, Math.round((processedTime / options.videoDuration) * 100)));
             message = `Đang ghép audio/video (${mergeProgress}%)`;
-            lastProgress = mergeProgress; // Update lastProgress
-            logger.debug(`FFmpeg merge progress: ${mergeProgress}% (${processedTime}s / ${options.videoDuration}s)`);
+            lastProgress = mergeProgress;
           } else {
             // Heuristic: merge thường nhanh hơn convert (~20% thời gian video)
             const estimatedMergeDuration = (processedTime / 0.2);
             mergeProgress = Math.min(100, Math.max(95, Math.round((processedTime / estimatedMergeDuration) * 100)));
             message = `Đang ghép audio/video (${mergeProgress}%)`;
             lastProgress = mergeProgress;
-            logger.debug(`FFmpeg merge progress (estimated): ${mergeProgress}% (${processedTime}s processed)`);
           }
           
           options.onProgress({
@@ -734,9 +740,8 @@ export function downloadVideo(
             progress: currentProgress, // 95% nếu vừa đạt 100%, hoặc giữ progress hiện tại
             phase: 'postprocessing',
             message,
-            indeterminate: true, // Chưa có progress chính xác từ ffmpeg
+            indeterminate: true,
           });
-          logger.debug(`Post-processing started: ${processType}, progress set to ${currentProgress}%, indeterminate: true`);
         }
         
         // Parse các message khác cho thấy download đã xong
@@ -850,7 +855,9 @@ export function downloadVideo(
               if (!finalTitle || finalTitle.trim().length === 0) {
                 logger.warn(`finalTitle is empty, using default`);
                 finalTitle = 'video';
-              } else if (finalTitle.includes('http://') || finalTitle.includes('https://') || finalTitle.includes('youtube.com') || finalTitle.includes('youtu.be')) {
+              } else if (finalTitle.includes('http://') || finalTitle.includes('https://') || 
+                         finalTitle.includes('youtube.com') || finalTitle.includes('youtu.be') ||
+                         finalTitle.includes('facebook.com') || finalTitle.includes('fb.com')) {
                 logger.warn(`finalTitle is URL: ${finalTitle}, using default`);
                 finalTitle = 'video';
               }
@@ -910,8 +917,20 @@ export function downloadVideo(
           logger.info(`Download completed: ${finalPath}`);
           if (resolvePromise) resolvePromise(finalPath);
         } else {
-          logger.error(`File not found after download: ${options.outputPath}`);
-          if (rejectPromise) rejectPromise(new Error('File không tồn tại sau khi download'));
+          const dir = path.dirname(options.outputPath);
+          logger.error(`File not found after download. Output path: ${options.outputPath}, Directory: ${dir}`);
+          // Log directory contents for debugging
+          try {
+            if (fs.existsSync(dir)) {
+              const files = fs.readdirSync(dir);
+              logger.error(`Directory contents: ${files.join(', ')}`);
+            } else {
+              logger.error(`Directory does not exist: ${dir}`);
+            }
+          } catch (error: any) {
+            logger.error(`Error reading directory: ${error.message}`);
+          }
+          if (rejectPromise) rejectPromise(new Error('File không tồn tại sau khi download. Có thể video không thể tải được hoặc yt-dlp gặp lỗi.'));
         }
       } else {
         // Extract error message từ stderr
@@ -1072,6 +1091,10 @@ async function findDownloadedFile(outputPath: string, jobStartTime: number): Pro
     }
     
     // Nếu không tìm thấy file chính, lấy file mới nhất (có thể là format khác)
+    if (validFiles.length === 0) {
+      logger.error(`No valid files found in directory: ${dir}`);
+      return null;
+    }
     const latestFile = validFiles[0];
     logger.info(`Found downloaded file (latest): ${latestFile.path}`);
     return latestFile.path;

@@ -1,50 +1,31 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '../components/Layout/MainLayout';
-import { LegalDisclaimer } from '../components/tiktok/LegalDisclaimer';
-import { TikTokInputSection } from '../components/tiktok/TikTokInputSection';
-import { TikTokPreviewCard } from '../components/tiktok/TikTokPreviewCard';
-import { useTikTokStore } from '../stores/tiktokStore';
+import { FacebookLegalDisclaimer } from '../components/facebook/FacebookLegalDisclaimer';
+import { FacebookInputSection } from '../components/facebook/FacebookInputSection';
+import { FacebookPreviewCard } from '../components/facebook/FacebookPreviewCard';
+import { useFacebookStore } from '../stores/facebookStore';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { analyzeTikTokVideo } from '../services/api';
-
-export interface TikTokVideoInfo {
-  id: string;
-  title: string;
-  author: string;
-  authorId: string;
-  thumbnail: string;
-  duration: number;
-  viewCount?: number;
-  likeCount?: number;
-  isPublic: boolean;
-  formats: Array<{
-    formatId: string;
-    ext: string;
-    resolution?: string;
-    filesize?: number;
-  }>;
-  estimatedSize: number;
-}
+import { analyzeFacebookVideo, FacebookVideoInfo } from '../services/api';
 
 interface VideoWithUrl {
-  video: TikTokVideoInfo;
+  video: FacebookVideoInfo;
   url: string;
 }
 
 /**
- * TikTok Downloader Page
+ * Facebook Downloader Page
  * 
- * Main page for TikTok video downloading
+ * Main page for Facebook video and story downloading
  * Features:
  * - Legal disclaimer (required)
- * - TikTok URL input
- * - Video preview
+ * - Facebook URL input
+ * - Video/Story preview
  * - Download queue
  */
-export function TikTokDownloadPage() {
-  const legalAccepted = useTikTokStore((state) => state.legalAccepted);
-  const setLegalAccepted = useTikTokStore((state) => state.setLegalAccepted);
+export function FacebookDownloadPage() {
+  const legalAccepted = useFacebookStore((state) => state.legalAccepted);
+  const setLegalAccepted = useFacebookStore((state) => state.setLegalAccepted);
   
   const [showDisclaimer, setShowDisclaimer] = useState(!legalAccepted);
   const [analyzedVideos, setAnalyzedVideos] = useState<VideoWithUrl[]>([]);
@@ -64,7 +45,7 @@ export function TikTokDownloadPage() {
   };
 
   const handleDeclineLegal = () => {
-    // Redirect to home or show message
+    // Redirect to home
     window.location.href = '/';
   };
 
@@ -75,13 +56,13 @@ export function TikTokDownloadPage() {
     const errors: string[] = [];
 
     try {
-      // Analyze URLs in parallel (limit to 3 concurrent for TikTok)
+      // Analyze URLs in parallel (limit to 3 concurrent)
       const batchSize = 3;
       for (let i = 0; i < urls.length; i += batchSize) {
         const batch = urls.slice(i, i + batchSize);
         const batchResults = await Promise.allSettled(
           batch.map(async (url) => {
-            const videoInfo = await analyzeTikTokVideo(url);
+            const videoInfo = await analyzeFacebookVideo(url);
             return { video: videoInfo, url };
           })
         );
@@ -90,7 +71,7 @@ export function TikTokDownloadPage() {
           if (result.status === 'fulfilled') {
             results.push(result.value);
           } else {
-            const url = batch[index]; // Get URL from batch array
+            const url = batch[index];
             const errorMsg = result.reason?.message || 'Lỗi không xác định';
             if (errorMsg.includes(url) || errorMsg.length > 100) {
               errors.push(errorMsg);
@@ -124,7 +105,7 @@ export function TikTokDownloadPage() {
 
   // Show disclaimer if not accepted
   if (showDisclaimer) {
-    return <LegalDisclaimer onAccept={handleAcceptLegal} onDecline={handleDeclineLegal} />;
+    return <FacebookLegalDisclaimer onAccept={handleAcceptLegal} onDecline={handleDeclineLegal} />;
   }
 
   return (
@@ -132,14 +113,14 @@ export function TikTokDownloadPage() {
       <div className="space-y-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-black dark:bg-gray-800 rounded-full mb-4">
-            <span className="text-2xl">🎵</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 dark:bg-blue-800 rounded-full mb-4">
+            <span className="text-2xl">📘</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-            TikTok Downloader
+            Facebook Downloader
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Tải video TikTok không watermark - Chỉ hỗ trợ video public
+            Tải video và story từ Facebook - Chỉ hỗ trợ nội dung public
           </p>
         </div>
 
@@ -151,8 +132,8 @@ export function TikTokDownloadPage() {
               <p className="font-medium mb-1">Lưu ý pháp lý:</p>
               <p>
                 Chỉ tải nội dung bạn sở hữu hoặc được phép sử dụng. 
-                Tuân thủ Terms of Service của TikTok. 
-                Ứng dụng chỉ hỗ trợ video public.
+                Tuân thủ Terms of Service của Facebook. 
+                Ứng dụng chỉ hỗ trợ nội dung public (video và story).
               </p>
             </div>
           </div>
@@ -174,7 +155,7 @@ export function TikTokDownloadPage() {
 
         {/* URL Input Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-          <TikTokInputSection
+          <FacebookInputSection
             onAnalyze={handleAnalyze}
             onClear={handleClear}
             loading={loading}
@@ -198,7 +179,7 @@ export function TikTokDownloadPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {analyzedVideos.map((item, index) => (
-                <TikTokPreviewCard
+                <FacebookPreviewCard
                   key={item.video.id || index}
                   videoInfo={item.video}
                   videoUrl={item.url}
@@ -214,8 +195,8 @@ export function TikTokDownloadPage() {
         {/* Empty State */}
         {analyzedVideos.length === 0 && !loading && !error && (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p className="text-lg mb-2">Chưa có video nào được phân tích</p>
-            <p className="text-sm">Nhập URL TikTok ở trên để bắt đầu</p>
+            <p className="text-lg mb-2">Chưa có video/story nào được phân tích</p>
+            <p className="text-sm">Nhập URL Facebook ở trên để bắt đầu</p>
           </div>
         )}
       </div>

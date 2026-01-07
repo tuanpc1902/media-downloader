@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, DragEvent } from 'react';
 import { Search, X, AlertCircle, CheckCircle, Youtube, Music, Video } from 'lucide-react';
 import { analyzeVideo, analyzePlaylist } from '../../services/api';
 import { MediaInfo } from '../../types';
+import { isPlaylistUrl, extractVideoId } from '../../utils/urlValidator';
 
 interface URLInputSectionProps {
   onAnalyzeComplete: (results: MediaInfo[]) => void;
@@ -15,10 +16,37 @@ export function URLInputSection({ onAnalyzeComplete, onError }: URLInputSectionP
   const [validations, setValidations] = useState<Map<number, { valid: boolean; platform?: string; error?: string }>>(new Map());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  /**
+   * Normalize URL - thêm protocol nếu thiếu
+   */
+  const normalizeUrl = (url: string): string => {
+    let normalized = url.trim();
+    
+    // Loại bỏ fragments (#)
+    const hashIndex = normalized.indexOf('#');
+    if (hashIndex !== -1) {
+      normalized = normalized.substring(0, hashIndex);
+    }
+    
+    // Loại bỏ trailing slashes
+    normalized = normalized.replace(/\/+$/, '');
+    
+    // Thêm protocol nếu thiếu (giả định https)
+    if (!normalized.match(/^https?:\/\//i)) {
+      if (normalized.includes('.') || normalized.includes('/')) {
+        normalized = 'https://' + normalized;
+      }
+    }
+    
+    return normalized;
+  };
+
   const detectPlatform = (url: string): string | null => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-    if (url.includes('soundcloud.com')) return 'soundcloud';
-    if (url.includes('tiktok.com')) return 'tiktok';
+    const normalized = normalizeUrl(url).toLowerCase();
+    
+    if (normalized.includes('youtube.com') || normalized.includes('youtu.be')) return 'youtube';
+    if (normalized.includes('soundcloud.com')) return 'soundcloud';
+    if (normalized.includes('tiktok.com')) return 'tiktok';
     return null;
   };
 
@@ -26,15 +54,39 @@ export function URLInputSection({ onAnalyzeComplete, onError }: URLInputSectionP
     const trimmed = url.trim();
     if (!trimmed) return { valid: false, error: 'URL trống' };
     
-    try {
-      new URL(trimmed);
-    } catch {
-      return { valid: false, error: 'URL không hợp lệ' };
+    const platform = detectPlatform(trimmed);
+    
+    // Nếu không phải platform được hỗ trợ, kiểm tra xem có phải là video ID không
+    if (!platform) {
+      const videoId = extractVideoId(trimmed);
+      if (videoId) {
+        return { valid: true, platform: 'youtube' };
+      }
+      return { valid: false, error: 'Nền tảng không được hỗ trợ' };
     }
 
-    const platform = detectPlatform(trimmed);
-    if (!platform) {
-      return { valid: false, error: 'Nền tảng không được hỗ trợ' };
+    // Với YouTube, validate video ID hoặc playlist
+    if (platform === 'youtube') {
+      const videoId = extractVideoId(trimmed);
+      const isPlaylist = isPlaylistUrl(trimmed);
+      
+      if (!videoId && !isPlaylist) {
+        const normalized = normalizeUrl(trimmed);
+        const normalizedVideoId = extractVideoId(normalized);
+        const normalizedIsPlaylist = isPlaylistUrl(normalized);
+        
+        if (!normalizedVideoId && !normalizedIsPlaylist) {
+          return { valid: false, error: 'Không thể extract video ID hoặc playlist ID từ URL YouTube' };
+        }
+      }
+    }
+
+    // Với các platform khác, chỉ cần kiểm tra format URL cơ bản
+    try {
+      const normalized = normalizeUrl(trimmed);
+      new URL(normalized);
+    } catch {
+      return { valid: false, error: 'URL không hợp lệ' };
     }
 
     return { valid: true, platform };
@@ -131,7 +183,8 @@ export function URLInputSection({ onAnalyzeComplete, onError }: URLInputSectionP
         const batch = urlList.slice(i, i + batchSize);
         const batchResults = await Promise.allSettled(
           batch.map(async (url) => {
-            const isPlaylist = url.includes('list=') || url.includes('/playlist');
+            // Check if it's a playlist URL (only if it has playlist ID but no video ID)
+            const isPlaylist = isPlaylistUrl(url);
             if (isPlaylist) {
               return await analyzePlaylist(url);
             } else {

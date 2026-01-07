@@ -29,10 +29,17 @@ export function DarkModeToggle() {
   return (
     <button
       onClick={() => setDarkMode(!darkMode)}
-      className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="p-2.5 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-300 relative group"
       aria-label="Toggle dark mode"
+      title={darkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
     >
-      {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      <div className="relative">
+        {darkMode ? (
+          <Sun className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" />
+        ) : (
+          <Moon className="w-5 h-5 transition-transform duration-300 group-hover:-rotate-12" />
+        )}
+      </div>
     </button>
   );
 }

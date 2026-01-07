@@ -1,7 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 import { ProgressUpdate } from '../types';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
+// In development, use empty string to go through Vite proxy
+// In production, use the configured WS_URL or default to current origin
+const WS_URL = import.meta.env.VITE_WS_URL || 
+  (import.meta.env.DEV ? '' : 'http://localhost:3001');
 
 class WebSocketService {
   private socket: Socket | null = null;
@@ -30,6 +33,11 @@ class WebSocketService {
 
     this.socket.on('error', (error) => {
       console.error('WebSocket error:', error);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+      console.error('Attempting to connect to:', WS_URL || 'current origin (via proxy)');
     });
 
     // Register existing callbacks if socket is already connected

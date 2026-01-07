@@ -18,7 +18,7 @@ services:
       - key: PORT
         value: 3001
       - key: FRONTEND_URL
-        value: media-downloader-orcin.vercel.app
+        value: localhost:5173
       - key: DOWNLOAD_DIR
         value: /opt/render/project/src/downloads
       - key: LOG_FILE

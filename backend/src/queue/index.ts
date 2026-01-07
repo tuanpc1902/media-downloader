@@ -74,8 +74,10 @@ const connection = getOrCreateConnection();
 // BullMQ will queue operations until Redis is available
 export const downloadQueue = new Queue('downloads', { connection });
 export const tiktokDownloadQueue = new Queue('download-tiktok', { connection });
+export const facebookDownloadQueue = new Queue('download-facebook', { connection });
 export const queueEvents = new QueueEvents('downloads', { connection });
 export const tiktokQueueEvents = new QueueEvents('download-tiktok', { connection });
+export const facebookQueueEvents = new QueueEvents('download-facebook', { connection });
 
 // Log status
 if (isRedisAvailable()) {

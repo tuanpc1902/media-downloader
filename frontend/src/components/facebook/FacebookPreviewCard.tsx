@@ -1,32 +1,13 @@
 import { useState } from 'react';
-import { Clock, User, Eye, Heart, Download, Music, Video } from 'lucide-react';
+import { Clock, User, Eye, Download, Music, Video, FileVideo } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
-import { createTikTokDownload } from '../../services/api';
+import { createFacebookDownload, FacebookVideoInfo } from '../../services/api';
 import { useDownloadStore } from '../../stores/downloadStore';
 import { showToast } from '../Toast';
 
-export interface TikTokVideoInfo {
-  id: string;
-  title: string;
-  author: string;
-  authorId: string;
-  thumbnail: string;
-  duration: number;
-  viewCount?: number;
-  likeCount?: number;
-  isPublic: boolean;
-  formats: Array<{
-    formatId: string;
-    ext: string;
-    resolution?: string;
-    filesize?: number;
-  }>;
-  estimatedSize: number;
-}
-
-interface TikTokPreviewCardProps {
-  videoInfo: TikTokVideoInfo;
+interface FacebookPreviewCardProps {
+  videoInfo: FacebookVideoInfo;
   videoUrl: string;
   onDownloadStart?: () => void;
 }
@@ -52,11 +33,11 @@ function formatFileSize(bytes: number): string {
 }
 
 /**
- * TikTok Video Preview Card
+ * Facebook Video/Story Preview Card
  * 
- * Displays video metadata and download options
+ * Displays content metadata and download options
  */
-export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikTokPreviewCardProps) {
+export function FacebookPreviewCard({ videoInfo, videoUrl, onDownloadStart }: FacebookPreviewCardProps) {
   const [selectedFormat, setSelectedFormat] = useState<'video' | 'audio'>('video');
   const [audioFormat, setAudioFormat] = useState<'mp3' | 'm4a'>('mp3');
   const [quality, setQuality] = useState<'best' | '720p' | '480p' | '360p'>('best');
@@ -65,7 +46,7 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
 
   const handleDownload = async () => {
     if (!videoInfo.isPublic) {
-      showToast('Video này không phải là public. Chỉ có thể tải video public.', 'error');
+      showToast('Nội dung này không thể truy cập. Chỉ có thể tải nội dung public.', 'error');
       return;
     }
 
@@ -78,13 +59,13 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
         quality: selectedFormat === 'video' ? quality : undefined,
       };
 
-      const result = await createTikTokDownload(request);
+      const result = await createFacebookDownload(request);
       
       // Convert to DownloadJob format for store
       const job = {
         id: result.jobId,
         url: videoUrl,
-        platform: 'tiktok' as const,
+        platform: 'facebook' as const,
         title: videoInfo.title,
         status: result.status as any,
         format: selectedFormat === 'video' ? 'mp4' : (audioFormat === 'mp3' ? 'mp3' : 'm4a'),
@@ -122,15 +103,17 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
         
         {/* Platform Badge */}
         <div className="absolute top-3 right-3">
-          <Badge variant="platform" platform="tiktok">
-            TikTok
+          <Badge variant="platform" platform="facebook">
+            Facebook {videoInfo.type === 'story' ? 'Story' : ''}
           </Badge>
         </div>
 
         {/* Duration Overlay */}
-        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 text-white rounded text-sm font-medium">
-          {formatDuration(videoInfo.duration)}
-        </div>
+        {videoInfo.duration > 0 && (
+          <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 text-white rounded text-sm font-medium">
+            {formatDuration(videoInfo.duration)}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -142,15 +125,19 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
 
         {/* Metadata */}
         <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-            <User className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium">{videoInfo.author}</span>
-          </div>
+          {videoInfo.author && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <User className="w-4 h-4 flex-shrink-0" />
+              <span className="font-medium">{videoInfo.author}</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-            <Clock className="w-4 h-4 flex-shrink-0" />
-            <span>{formatDuration(videoInfo.duration)}</span>
-          </div>
+          {videoInfo.duration > 0 && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              <span>{formatDuration(videoInfo.duration)}</span>
+            </div>
+          )}
 
           {videoInfo.viewCount && (
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -159,12 +146,11 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
             </div>
           )}
 
-          {videoInfo.likeCount && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <Heart className="w-4 h-4 flex-shrink-0" />
-              <span>{formatNumber(videoInfo.likeCount)} lượt thích</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <FileVideo className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium">Loại:</span>
+            <span>{videoInfo.type === 'story' ? 'Story' : 'Video'}</span>
+          </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
             <span className="font-medium">Kích thước ước tính:</span>
@@ -277,7 +263,7 @@ export function TikTokPreviewCard({ videoInfo, videoUrl, onDownloadStart }: TikT
 
           {!videoInfo.isPublic && (
             <p className="text-sm text-red-600 dark:text-red-400 text-center">
-              ⚠️ Video này không phải là public. Chỉ có thể tải video public.
+              ⚠️ Nội dung này không thể truy cập. Chỉ có thể tải nội dung public.
             </p>
           )}
         </div>

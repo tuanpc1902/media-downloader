@@ -56,8 +56,28 @@ export const downloadFile = (id: string): string => {
   return `${API_BASE_URL}/download/${id}/file`;
 };
 
+// Redis health check
+// export const checkRedisHealth = async (): Promise<{
+//   status: string;
+//   redis: {
+//     connected: boolean;
+//     status: string;
+//     host?: string;
+//     port?: number;
+//   };
+// }> => {
+//   const response = await api.get('/health/redis');
+//   return response.data;
+// };
+
 export const cancelDownload = async (id: string): Promise<void> => {
-  await api.delete(`/download/${id}`);
+  try {
+    const response = await api.delete(`/download/${id}`);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error || error.message || 'Lỗi hủy download';
+    throw new Error(errorMessage);
+  }
 };
 
 export const createBatchDownload = async (request: BatchDownloadRequest): Promise<BatchDownloadResponse> => {
@@ -122,6 +142,53 @@ export const createTikTokDownload = async (request: TikTokDownloadRequest): Prom
   }
 };
 
+// Facebook-specific APIs
+export interface FacebookVideoInfo {
+  id: string;
+  title: string;
+  author?: string;
+  authorId?: string;
+  thumbnail: string;
+  duration: number;
+  viewCount?: number;
+  isPublic: boolean;
+  formats: Array<{
+    formatId: string;
+    ext: string;
+    resolution?: string;
+    filesize?: number;
+  }>;
+  estimatedSize: number;
+  type: 'video' | 'story';
+}
+
+export interface FacebookDownloadRequest {
+  url: string;
+  format: 'video' | 'audio';
+  audioFormat?: 'mp3' | 'm4a';
+  quality?: 'best' | '720p' | '480p' | '360p';
+}
+
+export const analyzeFacebookVideo = async (url: string): Promise<FacebookVideoInfo> => {
+  try {
+    const response = await api.post<FacebookVideoInfo>('/facebook/analyze', { url });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error || error.message || 'Lỗi phân tích video/story Facebook';
+    throw new Error(errorMessage);
+  }
+};
+
+export const createFacebookDownload = async (request: FacebookDownloadRequest): Promise<{ jobId: string; status: string; createdAt: string }> => {
+  try {
+    const response = await api.post<{ jobId: string; status: string; createdAt: string }>('/facebook/download', request);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error || error.message || 'Lỗi tạo download job';
+    throw new Error(errorMessage);
+  }
+};
+
 // YouTube Search
 export interface YouTubeSearchResult {
   video: MediaInfo;
@@ -140,6 +207,23 @@ export const searchYouTube = async (query: string, limit: number = 10, page: num
     const errorMessage = error.response?.data?.error || error.message || 'Lỗi tìm kiếm YouTube';
     throw new Error(errorMessage);
   }
+};
+
+// Health check APIs
+export interface RedisHealthResponse {
+  status: 'ok' | 'error';
+  redis: {
+    host: string;
+    port: number;
+    connected: boolean;
+    status: string;
+  };
+  timestamp: string;
+}
+
+export const checkRedisHealth = async (): Promise<RedisHealthResponse> => {
+  const response = await api.get<RedisHealthResponse>('/health/redis');
+  return response.data;
 };
 
 

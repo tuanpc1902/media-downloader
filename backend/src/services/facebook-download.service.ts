@@ -1,27 +1,27 @@
 import { v4 as uuidv4 } from 'uuid';
-import { tiktokDownloadQueue } from '../queue';
+import { facebookDownloadQueue } from '../queue';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import { createOutputPath } from '../utils/filename';
 import { analyzeVideo } from '../utils/downloader';
-import { tiktokJobStore } from './tiktok-job-store';
+import { facebookJobStore } from './facebook-job-store';
 import { jobStore } from './jobStore';
 import path from 'path';
 import fs from 'fs';
-import { config } from '../config';
 
-export interface TikTokDownloadRequest {
+export interface FacebookDownloadRequest {
   url: string;
   format: 'video' | 'audio';
+  type?: 'video' | 'story'; // Auto-detected if not provided
   audioFormat?: 'mp3' | 'm4a';
   quality?: 'best' | '720p' | '480p' | '360p';
 }
 
-export interface TikTokDownloadJob {
+export interface FacebookDownloadJob {
   id: string;
   url: string;
   title: string;
-  author: string;
+  author?: string;
   status: 'pending' | 'downloading' | 'converting' | 'completed' | 'error' | 'cancelled' | 'paused';
   format: string;
   progress: number;
@@ -37,54 +37,73 @@ export interface TikTokDownloadJob {
 }
 
 /**
- * TikTok-specific download service
+ * Facebook-specific download service
  * 
  * Features:
- * - TikTok-optimized format selection (no watermark)
+ * - Facebook video and story download
  * - Proper file naming: {title} - {author}.{ext}
  * - Duplicate file handling
  */
-export class TikTokDownloadService {
+export class FacebookDownloadService {
   /**
-   * Create TikTok download job
+   * Create Facebook download job
    */
-  async createDownloadJob(request: TikTokDownloadRequest): Promise<TikTokDownloadJob> {
+  async createDownloadJob(request: FacebookDownloadRequest): Promise<FacebookDownloadJob> {
     const jobId = uuidv4();
     
-    // Normalize URL: Remove query parameters
-    const normalizedUrl = this.normalizeTikTokUrl(request.url);
+    // Normalize URL
+    const normalizedUrl = this.normalizeFacebookUrl(request.url);
     
-    // Analyze video để lấy title và author
+    // Analyze video/story để lấy title và author
     let videoTitle = 'video';
-    let videoAuthor = 'unknown';
+    let videoAuthor: string | undefined;
+    let contentType: 'video' | 'story' = request.type || 'video';
     
     try {
-      logger.info(`Analyzing TikTok video to get metadata: ${normalizedUrl}`);
+      logger.info(`Analyzing Facebook content to get metadata: ${normalizedUrl}`);
       const videoInfo = await analyzeVideo(normalizedUrl);
       videoTitle = videoInfo.title || 'video';
-      videoAuthor = videoInfo.channel || 'unknown';
+      videoAuthor = videoInfo.channel || undefined;
+      
+      // Detect content type from URL
+      if (!request.type) {
+        contentType = normalizedUrl.includes('/stories/') || normalizedUrl.includes('story_fbid') 
+          ? 'story' 
+          : 'video';
+      }
       
       // Validate title
       if (!videoTitle || videoTitle.trim().length === 0 || videoTitle.includes('http')) {
-        videoTitle = 'video';
+        videoTitle = contentType === 'story' ? 'story' : 'video';
       }
     } catch (error: any) {
-      logger.warn(`Failed to analyze video: ${error.message}, using defaults`);
+      logger.warn(`Failed to analyze content: ${error.message}, using defaults`);
     }
     
-    // Format yt-dlp format string cho TikTok (no watermark)
+    // Format yt-dlp format string cho Facebook
     const ytdlpFormat = this.formatYtdlpFormat(request);
     
-    // Create output path
-    const outputDir = createOutputPath(jobId);
-    const extension = request.format === 'video' ? 'mp4' : (request.audioFormat === 'mp3' ? 'mp3' : 'm4a');
-    const filename = this.createFilename(videoTitle, videoAuthor, extension, outputDir);
-    const outputPath = path.join(outputDir, `${filename}.${extension}`);
+    // Create output path với template yt-dlp chuẩn
+    // KHÔNG dùng title trong output path để tránh lỗi "Fixed output name"
+    // yt-dlp sẽ tự quản lý file tạm, sau đó rename sang tên mong muốn
+    const outputPath = createOutputPath(jobId);
+    
+    // Đảm bảo thư mục tồn tại
+    // KHÔNG xóa file cũ - chỉ tạo thư mục nếu chưa có
+    if (!fs.existsSync(config.download.dir)) {
+      fs.mkdirSync(config.download.dir, { recursive: true });
+    }
+    if (!fs.existsSync(config.download.completedDir)) {
+      fs.mkdirSync(config.download.completedDir, { recursive: true });
+    }
+    if (!fs.existsSync(config.download.jobsDir)) {
+      fs.mkdirSync(config.download.jobsDir, { recursive: true });
+    }
     
     // Create job
-    const job: TikTokDownloadJob = {
+    const job: FacebookDownloadJob = {
       id: jobId,
-      url: normalizedUrl, // Use normalized URL
+      url: normalizedUrl,
       title: videoTitle,
       author: videoAuthor,
       status: 'pending',
@@ -95,9 +114,9 @@ export class TikTokDownloadService {
     };
     
     // Store job metadata
-    tiktokJobStore.set(jobId, {
+    facebookJobStore.set(jobId, {
       jobId,
-      url: normalizedUrl, // Use normalized URL
+      url: normalizedUrl,
       format: ytdlpFormat,
       outputPath,
       title: videoTitle,
@@ -107,14 +126,11 @@ export class TikTokDownloadService {
     });
     
     // Enqueue job
-    // Check Redis availability before adding job
     const { isRedisAvailable, waitForRedis } = await import('../lib/redis');
     
-    // First check if available
     if (!isRedisAvailable()) {
-      // If not available, wait a bit (Redis might be connecting)
       logger.info('[Redis] Not immediately available, waiting for connection...');
-      const connected = await waitForRedis(3000); // Wait up to 3 seconds
+      const connected = await waitForRedis(3000);
       
       if (!connected) {
         logger.error('[Redis] Still not available after waiting');
@@ -124,9 +140,9 @@ export class TikTokDownloadService {
       logger.info('[Redis] Connection established after waiting');
     }
     
-    await tiktokDownloadQueue.add('download-tiktok', {
+    await facebookDownloadQueue.add('download-facebook', {
       jobId,
-      url: normalizedUrl, // Use normalized URL
+      url: normalizedUrl,
       format: ytdlpFormat,
       outputPath,
       title: videoTitle,
@@ -142,96 +158,70 @@ export class TikTokDownloadService {
       },
     });
     
-    logger.info(`Created TikTok download job: ${jobId} for ${videoTitle}`);
+    logger.info(`Created Facebook download job: ${jobId} for ${videoTitle}`);
     return job;
   }
 
   /**
-   * Normalize TikTok URL by removing unnecessary query parameters
+   * Normalize Facebook URL by removing unnecessary query parameters
    */
-  private normalizeTikTokUrl(url: string): string {
+  private normalizeFacebookUrl(url: string): string {
     try {
       const urlObj = new URL(url);
-      // Remove all query parameters - yt-dlp doesn't need them
-      urlObj.search = '';
+      // Keep essential params only
+      const essentialParams = ['v', 'story_fbid', 'id'];
+      const newSearchParams = new URLSearchParams();
+      
+      urlObj.searchParams.forEach((value, key) => {
+        if (essentialParams.includes(key)) {
+          newSearchParams.set(key, value);
+        }
+      });
+      
+      urlObj.search = newSearchParams.toString();
       return urlObj.toString();
     } catch {
-      // If URL parsing fails, return original
       return url;
     }
   }
 
   /**
-   * Format yt-dlp format string cho TikTok (no watermark)
+   * Format yt-dlp format string cho Facebook
+   * Sử dụng format đơn giản với nhiều fallback options để đảm bảo luôn có format để download
+   * Facebook thường không có nhiều format options, nên dùng format đơn giản hơn
    */
-  private formatYtdlpFormat(request: TikTokDownloadRequest): string {
+  private formatYtdlpFormat(request: FacebookDownloadRequest): string {
     if (request.format === 'audio') {
-      // Audio only: bestaudio
-      if (request.audioFormat === 'mp3') {
-        return 'bestaudio[ext=m4a]/bestaudio'; // Will convert to MP3 with ffmpeg
-      } else {
-        return 'bestaudio[ext=m4a]/bestaudio';
-      }
+      // Audio only: format đơn giản với fallback
+      // Không yêu cầu extension cụ thể vì Facebook có thể có nhiều format khác nhau
+      return 'bestaudio/best';
     } else {
-      // Video: best quality, no watermark
-      // TikTok format: bestvideo+bestaudio hoặc best
+      // Video: format đơn giản với fallback
       if (request.quality === 'best') {
-        return 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+        // Best quality: thử merge video+audio, sau đó fallback sang best single file
+        return 'bestvideo+bestaudio/best';
       } else {
-        // Quality-specific format
         const height = request.quality === '720p' ? 720 : request.quality === '480p' ? 480 : 360;
-        return `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${height}][ext=mp4]/best`;
+        // Specific quality: thử với height limit, sau đó fallback sang best available
+        return `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/bestvideo+bestaudio/best`;
       }
     }
   }
 
-  /**
-   * Create filename theo template: {title} - {author}.{ext}
-   * Handle duplicates: {title} - {author} (1).{ext}
-   */
-  private createFilename(title: string, author: string, extension: string, outputDir: string): string {
-    // Sanitize title and author
-    const sanitize = (str: string): string => {
-      return str
-        .replace(/[<>:"/\\|?*\x00]/g, '') // Remove invalid chars
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 100); // Limit length
-    };
-    
-    const safeTitle = sanitize(title) || 'video';
-    const safeAuthor = sanitize(author) || 'unknown';
-    
-    let filename = `${safeTitle} - ${safeAuthor}`;
-    let counter = 0;
-    let fullPath = path.join(outputDir, `${filename}.${extension}`);
-    
-    // Check for duplicates
-    while (fs.existsSync(fullPath)) {
-      counter++;
-      filename = `${safeTitle} - ${safeAuthor} (${counter})`;
-      fullPath = path.join(outputDir, `${filename}.${extension}`);
-    }
-    
-    return filename;
-  }
 
   /**
    * Get job by ID
    */
-  async getJob(jobId: string): Promise<TikTokDownloadJob | null> {
-    // Get job metadata from store
-    const jobData = tiktokJobStore.get(jobId);
+  async getJob(jobId: string): Promise<FacebookDownloadJob | null> {
+    const jobData = facebookJobStore.get(jobId);
     if (!jobData) return null;
     
-    // Convert to TikTokDownloadJob format
-    // This is a simplified version - in production, should query from database
     return {
       id: jobId,
       url: jobData.url,
       title: jobData.title || 'video',
-      author: jobData.author || 'unknown',
-      status: 'pending', // Should get from actual job status
+      author: jobData.author,
+      status: 'pending',
       format: jobData.format,
       progress: 0,
       createdAt: new Date(),
@@ -256,7 +246,7 @@ export class TikTokDownloadService {
    * Resume job
    */
   async resumeJob(jobId: string): Promise<void> {
-    const jobData = tiktokJobStore.get(jobId);
+    const jobData = facebookJobStore.get(jobId);
     if (!jobData) {
       throw new Error('Job không tồn tại');
     }
@@ -266,8 +256,8 @@ export class TikTokDownloadService {
       throw new Error('Redis is not available. Download queue is disabled.');
     }
     
-    await tiktokDownloadQueue.add(
-      `tiktok-${jobId}`,
+    await facebookDownloadQueue.add(
+      `facebook-${jobId}`,
       jobData,
       {
         jobId,
@@ -298,7 +288,7 @@ export class TikTokDownloadService {
       logger.warn(`Failed to cleanup job directory: ${error.message}`);
     }
     
-    tiktokJobStore.remove(jobId);
+    facebookJobStore.remove(jobId);
     jobStore.removeJob(jobId);
     
     if (!killed) {
@@ -311,8 +301,8 @@ export class TikTokDownloadService {
   /**
    * Retry failed job
    */
-  async retryJob(jobId: string): Promise<TikTokDownloadJob> {
-    const jobData = tiktokJobStore.get(jobId);
+  async retryJob(jobId: string): Promise<FacebookDownloadJob> {
+    const jobData = facebookJobStore.get(jobId);
     if (!jobData) {
       throw new Error('Job không tồn tại');
     }
@@ -323,8 +313,8 @@ export class TikTokDownloadService {
     }
     
     const newJobId = uuidv4();
-    await tiktokDownloadQueue.add(
-      `tiktok-${newJobId}`,
+    await facebookDownloadQueue.add(
+      `facebook-${newJobId}`,
       { ...jobData, jobId: newJobId },
       {
         jobId: newJobId,
@@ -342,7 +332,7 @@ export class TikTokDownloadService {
       id: newJobId,
       url: jobData.url,
       title: jobData.title,
-      author: jobData.author || 'unknown',
+      author: jobData.author,
       status: 'pending',
       format: jobData.format,
       progress: 0,

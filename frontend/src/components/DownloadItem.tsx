@@ -3,7 +3,7 @@ import { Download, X, CheckCircle, AlertCircle, Loader2, FileDown } from 'lucide
 import { downloadFile, cancelDownload } from '../services/api';
 import { useDownloadStore } from '../stores/downloadStore';
 import { showToast } from './Toast';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 
 interface DownloadItemProps {
   job: DownloadJob;
@@ -58,8 +58,9 @@ function getStatusText(status: DownloadJob['status']): string {
   }
 }
 
-export function DownloadItem({ job, compact = false }: DownloadItemProps) {
+export const DownloadItem = memo(function DownloadItem({ job, compact = false }: DownloadItemProps) {
   const removeJob = useDownloadStore((state) => state.removeJob);
+  const updateJob = useDownloadStore((state) => state.updateJob);
   const prevStatusRef = useRef<DownloadJob['status']>(job.status);
   const hasShownSuccessRef = useRef(false);
   
@@ -103,12 +104,25 @@ export function DownloadItem({ job, compact = false }: DownloadItemProps) {
 
   const handleCancel = async () => {
     try {
+      // Call API to cancel on backend first
       await cancelDownload(job.id);
-      removeJob(job.id);
+      
+      // Update job status to cancelled after successful API call
+      updateJob(job.id, { status: 'cancelled', message: 'Đã hủy download' });
+      
       showToast('Đã hủy download', 'info');
-    } catch (error) {
+      
+      // Don't remove immediately - let user see cancelled status
+      // Job will be removed when WebSocket event arrives or user manually removes it
+    } catch (error: any) {
       console.error('Cancel error:', error);
-      showToast('Lỗi khi hủy download', 'error');
+      const errorMessage = error.message || 'Lỗi khi hủy download';
+      // If API call fails, still update status locally to show error
+      updateJob(job.id, { 
+        status: 'error', 
+        error: errorMessage 
+      });
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -136,11 +150,20 @@ export function DownloadItem({ job, compact = false }: DownloadItemProps) {
                   <FileDown className="w-4 h-4" />
                 </button>
               )}
-              {job.status !== 'completed' && job.status !== 'error' && (
+              {job.status !== 'completed' && job.status !== 'error' && job.status !== 'cancelled' && (
                 <button
                   onClick={handleCancel}
                   className="flex-shrink-0 p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                   title="Hủy"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              {job.status === 'cancelled' && (
+                <button
+                  onClick={() => removeJob(job.id)}
+                  className="flex-shrink-0 p-1 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/20 rounded transition-colors"
+                  title="Xóa"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -201,11 +224,20 @@ export function DownloadItem({ job, compact = false }: DownloadItemProps) {
             <Download className="w-5 h-5" />
           </button>
         )}
-        {job.status !== 'completed' && job.status !== 'error' && (
+        {job.status !== 'completed' && job.status !== 'error' && job.status !== 'cancelled' && (
           <button
             onClick={handleCancel}
             className="ml-2 p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
             title="Hủy"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+        {job.status === 'cancelled' && (
+          <button
+            onClick={() => removeJob(job.id)}
+            className="ml-2 p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-colors"
+            title="Xóa"
           >
             <X className="w-5 h-5" />
           </button>
@@ -384,7 +416,15 @@ export function DownloadItem({ job, compact = false }: DownloadItemProps) {
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if job data actually changed
+  return (
+    prevProps.job.id === nextProps.job.id &&
+    prevProps.job.status === nextProps.job.status &&
+    prevProps.job.progress === nextProps.job.progress &&
+    prevProps.compact === nextProps.compact
+  );
+});
 
 
 

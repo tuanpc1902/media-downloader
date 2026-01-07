@@ -2,7 +2,7 @@
  * API Types - Contract between Frontend and Backend
  */
 
-export type Platform = 'youtube' | 'soundcloud' | 'tiktok';
+export type Platform = 'youtube' | 'soundcloud' | 'tiktok' | 'facebook';
 export type JobStatus = 'pending' | 'downloading' | 'processing' | 'completed' | 'error' | 'cancelled' | 'paused';
 export type ProcessingPhase = 'downloading' | 'postprocessing' | 'renaming' | 'finished';
 export type FormatType = 'mp4' | 'webm' | 'mkv' | 'mp3' | 'm4a' | 'wav' | 'opus';

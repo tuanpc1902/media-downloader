@@ -127,12 +127,7 @@ export function createOutputPath(jobId: string): string {
   // Template này cho phép yt-dlp tạo nhiều file tạm với tên unique
   const filename = `%(id)s.%(ext)s`;
   
-  const outputPath = path.join(jobDir, filename);
-  
-  // Log output path template
-  logger.info(`[DEBUG] Output path template: ${outputPath}`);
-  
-  return outputPath;
+  return path.join(jobDir, filename);
 }
 
 /**

@@ -10,6 +10,20 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/socket.io': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('WebSocket proxy error:', err);
+          });
+          proxy.on('proxyReqWs', (proxyReq, _req, _socket) => {
+            console.log('WebSocket proxy request');
+          });
+        },
+      },
     },
   },
 });

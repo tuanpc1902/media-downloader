@@ -5,9 +5,7 @@ import { logger } from '../utils/logger';
 import { config } from '../config';
 import { getIO } from '../websocket';
 import { ProgressUpdate } from '../types';
-// import { tiktokJobStore } from '../services/tiktok-job-store'; // Unused for now
 import fs from 'fs';
-// import path from 'path'; // Unused for now
 
 interface TikTokDownloadJobData {
   jobId: string;

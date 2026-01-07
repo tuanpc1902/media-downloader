@@ -5,7 +5,6 @@ import { logger } from '../utils/logger';
 import { config } from '../config';
 import { createOutputPath } from '../utils/filename';
 import { analyzeVideo } from '../utils/downloader';
-// import path from 'path'; // Unused for now
 import fs from 'fs';
 
 export class DownloadService {
@@ -50,9 +49,6 @@ export class DownloadService {
       videoTitle = 'video';
     }
     
-    // Log final title để debug
-    logger.info(`Final title for job ${jobId}: "${videoTitle}" (URL: ${request.url})`);
-    
     // Tạo output path với template yt-dlp chuẩn
     // KHÔNG dùng title trong output path để tránh lỗi "Fixed output name"
     // yt-dlp sẽ tự quản lý file tạm, sau đó rename sang tên mong muốn
@@ -85,9 +81,20 @@ export class DownloadService {
     const ytdlpFormat = this.formatYtdlpFormat(request);
 
     // Check Redis availability before adding job
-    const { isRedisAvailable } = await import('../lib/redis');
+    const { isRedisAvailable, waitForRedis } = await import('../lib/redis');
+    
+    // First check if available
     if (!isRedisAvailable()) {
-      throw new Error('Redis is not available. Download queue is disabled. Please check Redis connection.');
+      // If not available, wait a bit (Redis might be connecting)
+      logger.info('[Redis] Not immediately available, waiting for connection...');
+      const connected = await waitForRedis(3000); // Wait up to 3 seconds
+      
+      if (!connected) {
+        logger.error('[Redis] Still not available after waiting');
+        throw new Error('Redis is not available. Download queue is disabled. Please check Redis connection. You can try POST /api/health/redis/reconnect to reconnect.');
+      }
+      
+      logger.info('[Redis] Connection established after waiting');
     }
     
     // Thêm job vào queue
@@ -125,19 +132,6 @@ export class DownloadService {
     logger.info(`Created download job: ${jobId} for URL: ${request.url}`);
     return job;
   }
-
-  /**
-   * Lấy extension từ output format
-   */
-  // private getExtension(format: string): string { // Unused for now
-  //   const formatMap: Record<string, string> = {
-  //     'mp4': 'mp4',
-  //     'webm': 'webm',
-  //     'mp3': 'mp3',
-  //     'webm-opus': 'webm',
-  //   };
-  //   return formatMap[format] || 'mp4';
-  // }
 
   /**
    * Format yt-dlp format string

@@ -145,8 +145,8 @@ export interface PlaylistDownloadRequest {
 export type MediaInfo = VideoInfo | PlaylistInfo;
 
 // Platform types
-export type Platform = 'youtube' | 'soundcloud' | 'tiktok' | 'unknown';
-export type PlatformType = 'youtube' | 'soundcloud' | 'tiktok';
+export type Platform = 'youtube' | 'soundcloud' | 'tiktok' | 'facebook' | 'unknown';
+export type PlatformType = 'youtube' | 'soundcloud' | 'tiktok' | 'facebook';
 
 // Enhanced VideoInfo with platform
 export interface EnhancedVideoInfo extends VideoInfo {

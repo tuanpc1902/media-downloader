@@ -7,7 +7,6 @@ import { getIO } from '../websocket';
 import { ProgressUpdate } from '../types';
 import { jobStore } from '../services/jobStore';
 import fs from 'fs';
-// import path from 'path'; // Unused for now
 
 interface DownloadJobData {
   jobId: string;
@@ -36,14 +35,6 @@ export function createDownloadWorker(): Worker {
     async (job: Job<DownloadJobData>) => {
       const { jobId, url, format, outputPath, audioOnly } = job.data;
 
-      // Log title để debug
-      logger.info(`Processing download job: ${jobId}`, {
-        url: job.data.url,
-        title: job.data.title,
-        hasTitle: !!job.data.title,
-        titleIsUrl: job.data.title ? (job.data.title.includes('http://') || job.data.title.includes('https://') || job.data.title.includes('youtube.com') || job.data.title.includes('youtu.be')) : false
-      });
-
       // Validate title trước khi pass vào downloadVideo
       let finalTitle = job.data.title;
       if (!finalTitle || finalTitle.trim().length === 0) {
@@ -66,15 +57,7 @@ export function createDownloadWorker(): Worker {
           message: 'Đang khởi tạo download...',
         };
         
-        logger.info(`Emitting initial progress for job ${jobId}`, {
-          title: job.data.title,
-        });
         io.to(`job-${jobId}`).emit('progress', initialUpdate);
-        
-        const roomSize = io.sockets.adapter.rooms.get(`job-${jobId}`)?.size || 0;
-        logger.info(`Job ${jobId} room has ${roomSize} client(s)`);
-        
-        // Update job progress ngay
         job.updateProgress(0);
 
         // Xác định expected extension dựa trên audioFormat
@@ -112,21 +95,7 @@ export function createDownloadWorker(): Worker {
               jobId,
             };
             
-            // Log progress update
-            logger.info(`Progress update for job ${jobId}: ${update.progress}%`, {
-              speed: update.speed,
-              eta: update.eta,
-              status: update.status,
-            });
-            
-            // Emit progress qua WebSocket
             io.to(`job-${jobId}`).emit('progress', progressUpdate);
-            
-            // Log WebSocket emit
-            const roomSize = io.sockets.adapter.rooms.get(`job-${jobId}`)?.size || 0;
-            logger.debug(`Emitted progress to room job-${jobId}, clients: ${roomSize}`);
-
-            // Update job progress
             job.updateProgress(update.progress);
           },
         });

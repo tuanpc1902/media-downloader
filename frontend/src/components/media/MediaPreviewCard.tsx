@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { MediaInfo } from '../../types/api';
 import { Badge } from '../common/Badge';
 import { Clock, User, Eye, AlertTriangle, Lock, Globe, Play } from 'lucide-react';
@@ -14,9 +14,11 @@ interface MediaPreviewCardProps {
   onCancel?: () => void;
   defaultAudioOnly?: boolean;
   compact?: boolean; // Compact mode for grid layout
+  onVideoSelect?: (media: MediaInfo) => void; // Callback when video card is clicked
 }
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds?: number): string {
+  if (!seconds || seconds <= 0) return '0:00';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
@@ -50,8 +52,20 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
-export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly = false, compact = false }: MediaPreviewCardProps) {
+export const MediaPreviewCard = memo(function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly = false, compact = false, onVideoSelect }: MediaPreviewCardProps) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Handle card click to select video in right sidebar
+  const handleCardClick = () => {
+    // Select video in right sidebar
+    if ((window as any).__selectVideoInRightSidebar) {
+      (window as any).__selectVideoInRightSidebar(media);
+    }
+    // Also call provided callback if any
+    if (onVideoSelect) {
+      onVideoSelect(media);
+    }
+  };
   
   // Convert MediaInfo to VideoInfo format for FormatSelector
   const videoInfo: VideoInfo = {
@@ -75,21 +89,30 @@ export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly
     // Compact mode - smaller card for grid layout
     return (
       <>
-        <div className={cn(
-          'bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700',
-          'hover:shadow-lg transition-shadow cursor-pointer'
-        )}>
+        <div 
+          className={cn(
+            'bg-background-surface dark:bg-background-surfaceDark rounded-xl shadow-sm overflow-hidden border border-border-light dark:border-border-dark',
+            'hover:shadow-md',
+            'transition-all duration-200 cursor-pointer group'
+          )}
+          onClick={handleCardClick}
+        >
           {/* Thumbnail */}
           <div className="relative aspect-video">
             <img
               src={media.thumbnail}
               alt={media.title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             {canPreview && (
               <button
-                onClick={() => setShowPreviewModal(true)}
-                className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPreviewModal(true);
+                }}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors group z-10"
                 title="Xem trước video"
               >
                 <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center group-hover:bg-red-700 transition-colors shadow-lg">
@@ -112,39 +135,40 @@ export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly
           </div>
 
           {/* Content */}
-          <div className="p-3">
+          <div className="p-3 sm:p-4">
             {/* Title */}
             <h3 className={cn(
-              'font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2',
-              'text-sm'
+              'font-semibold text-text-primary-light dark:text-text-primary-dark mb-2',
+              'text-sm sm:text-base',
+              'line-clamp-2 break-words'
             )}>
               {media.title}
             </h3>
 
             {/* Metadata */}
-            <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+            <div className="space-y-1.5 text-xs text-text-secondary-light dark:text-text-secondary-dark">
               {media.channel && (
-                <div className="flex items-center gap-1 truncate">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <User className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{media.channel}</span>
+                  <span className="truncate break-words">{media.channel}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {media.views && (
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    <span>{formatNumber(media.views)}</span>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Eye className="w-3 h-3 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{formatNumber(media.views)}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  <span>{formatDuration(media.duration)}</span>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Clock className="w-3 h-3 flex-shrink-0" />
+                  <span className="whitespace-nowrap">{formatDuration(media.duration)}</span>
                 </div>
               </div>
             </div>
 
             {/* Download Options - Ultra Compact */}
-            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-2 pt-2 border-t border-border-light dark:border-border-dark">
               <FormatSelector
                 videoInfo={videoInfo}
                 videoUrl={mediaUrl}
@@ -171,18 +195,26 @@ export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly
   // Full mode - original larger card
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div 
+        className="bg-background-surface dark:bg-background-surfaceDark rounded-xl shadow-sm overflow-hidden border border-border-light dark:border-border-dark cursor-pointer hover:shadow-md transition-all duration-200"
+        onClick={handleCardClick}
+      >
         {/* Thumbnail */}
         <div className="relative">
           <img
             src={media.thumbnail}
             alt={media.title}
             className="w-full h-72 object-cover"
+            loading="lazy"
+            decoding="async"
           />
           {canPreview && (
             <button
-              onClick={() => setShowPreviewModal(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors group"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPreviewModal(true);
+              }}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors group z-10"
               title="Xem trước video"
             >
               <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center group-hover:bg-red-700 transition-colors shadow-lg">
@@ -229,29 +261,29 @@ export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly
         </div>
 
         {/* Content */}
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {/* Title */}
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
+          <h2 className="text-base sm:text-lg font-bold text-text-primary-light dark:text-text-primary-dark mb-3 line-clamp-2 break-words">
             {media.title}
           </h2>
 
           {/* Metadata */}
           <div className="mb-4">
-            <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300 flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-4 text-xs text-text-secondary-light dark:text-text-secondary-dark flex-wrap">
               {(media.channel || media.author) && (
-                <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1 sm:flex-initial">
                   <User className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">{media.channel || media.author}</span>
+                  <span className="truncate break-words">{media.channel || media.author}</span>
                 </div>
               )}
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{formatDuration(media.duration)}</span>
+                <span className="whitespace-nowrap">{formatDuration(media.duration)}</span>
               </div>
               {media.views && (
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <Eye className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{formatNumber(media.views)}</span>
+                  <span className="whitespace-nowrap">{formatNumber(media.views)}</span>
                 </div>
               )}
             </div>
@@ -280,4 +312,12 @@ export function MediaPreviewCard({ media, mediaUrl, onDownload, defaultAudioOnly
       />
     </>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison để tránh re-render không cần thiết
+  return (
+    prevProps.media.id === nextProps.media.id &&
+    prevProps.mediaUrl === nextProps.mediaUrl &&
+    prevProps.compact === nextProps.compact &&
+    prevProps.defaultAudioOnly === nextProps.defaultAudioOnly
+  );
+});

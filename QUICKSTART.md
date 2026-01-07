@@ -14,13 +14,41 @@ cd frontend
 npm install
 ```
 
+### Kiểm tra prerequisites (Tùy chọn nhưng khuyến nghị)
+```bash
+cd backend
+npm run check-prerequisites
+```
+
+Script này sẽ kiểm tra:
+- ✅ Node.js 18+
+- ✅ Python 3.8+
+- ✅ yt-dlp
+- ✅ FFmpeg
+- ⚠️  Redis (optional - queue features sẽ bị tắt nếu không có)
+
 ## Bước 2: Cài đặt yt-dlp và FFmpeg
 
 ### Windows
+
+**1. Cài đặt Python (nếu chưa có):**
+- Tải từ [python.org](https://www.python.org/downloads/)
+- **Quan trọng**: Chọn "Add Python to PATH" khi cài đặt
+- Verify: `python --version`
+
+**2. Cài đặt yt-dlp:**
 ```bash
 pip install yt-dlp
-# FFmpeg: Tải từ https://ffmpeg.org/download.html và thêm vào PATH
+yt-dlp --version  # Verify installation
 ```
+
+**3. Cài đặt FFmpeg:**
+- Tải từ [ffmpeg.org](https://ffmpeg.org/download.html) hoặc [gyan.dev](https://www.gyan.dev/ffmpeg/builds/)
+- Giải nén vào `C:\ffmpeg`
+- Thêm `C:\ffmpeg\bin` vào PATH:
+  - Mở System Properties → Environment Variables
+  - Thêm `C:\ffmpeg\bin` vào Path variable
+- Verify: `ffmpeg -version`
 
 ### Linux
 ```bash
@@ -37,11 +65,24 @@ brew install yt-dlp ffmpeg
 ## Bước 3: Cài đặt và chạy Redis
 
 ### Windows
+
+**Option 1: Docker (Khuyến nghị - Dễ nhất)**
 ```bash
-# Tải từ https://redis.io/download
-# Hoặc dùng Docker:
-docker run -d -p 6379:6379 redis
+# Cần cài Docker Desktop trước: https://www.docker.com/products/docker-desktop
+docker run -d -p 6379:6379 --name yt-downloader-redis redis:7-alpine
 ```
+
+**Option 2: WSL2 + Linux Redis**
+```bash
+# Trong WSL2 terminal:
+sudo apt-get update
+sudo apt-get install redis-server
+sudo service redis-server start
+```
+
+**Option 3: Memurai (Windows-native Redis)**
+- Tải từ [memurai.com](https://www.memurai.com/)
+- Cài đặt và chạy như Windows service
 
 ### Linux
 ```bash
@@ -140,10 +181,10 @@ ffmpeg -version
 
 ## 📚 Tài liệu đầy đủ
 
-- `SETUP.md` - Hướng dẫn setup chi tiết
-- `USAGE.md` - Hướng dẫn sử dụng
-- `ARCHITECTURE.md` - Kiến trúc hệ thống
-- `PROJECT_SUMMARY.md` - Tóm tắt dự án
+- `README.md` - Tổng quan dự án và kiến trúc
+- `DEPLOY.md` - Hướng dẫn deploy lên production
+- `backend/REDIS_DEPLOY_RENDER.md` - Hướng dẫn cấu hình Redis trên Render
+- `backend/PRODUCTION_ENV.md` - Cấu hình môi trường production
 
 ## 🎉 Xong!
 

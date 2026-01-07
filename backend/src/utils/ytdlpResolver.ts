@@ -40,7 +40,12 @@ export async function resolveYtdlpWithFallback(): Promise<{ command: string; arg
   const resolved = resolveYtdlpCommand();
 
   // Kiểm tra command có hoạt động không
-  const isAvailable = await checkCommand(resolved.command, resolved.args.length > 0 ? resolved.args : ['--version']);
+  // Nếu đã có args (như 'python -m yt_dlp'), thêm '--version' vào cuối
+  // Nếu chưa có args (như 'yt-dlp'), dùng ['--version']
+  const checkArgs = resolved.args.length > 0 
+    ? [...resolved.args, '--version'] 
+    : ['--version'];
+  const isAvailable = await checkCommand(resolved.command, checkArgs);
 
   if (isAvailable) {
     return resolved;

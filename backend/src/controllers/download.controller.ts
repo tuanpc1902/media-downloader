@@ -14,6 +14,11 @@ import { validateYouTubeUrls } from '../utils/urlValidator';
 const downloadService = new DownloadService();
 const analyzeService = new AnalyzeService();
 
+// Helper function to get queue job ID (format: "download-{jobId}")
+function getQueueJobId(jobId: string): string {
+  return jobId.startsWith('download-') ? jobId : `download-${jobId}`;
+}
+
 export class DownloadController {
   /**
    * POST /api/download
@@ -86,7 +91,7 @@ export class DownloadController {
   async getStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const job = await downloadQueue.getJob(id);
+      const job = await downloadQueue.getJob(getQueueJobId(id));
 
       if (!job) {
         res.status(404).json({ error: 'Job không tồn tại' });
@@ -115,7 +120,7 @@ export class DownloadController {
   async downloadFile(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const job = await downloadQueue.getJob(id);
+      const job = await downloadQueue.getJob(getQueueJobId(id));
 
       if (!job) {
         res.status(404).json({ error: 'Job không tồn tại' });
@@ -188,7 +193,9 @@ export class DownloadController {
       });
 
       // Remove job khỏi queue (sau khi kill process)
-      const job = await downloadQueue.getJob(id);
+      // Job ID in queue is formatted as "download-{jobId}"
+      const queueJobId = id.startsWith('download-') ? id : `download-${id}`;
+      const job = await downloadQueue.getJob(queueJobId);
       if (job) {
         const state = await job.getState();
         
@@ -248,7 +255,9 @@ export class DownloadController {
       }
 
       // Update job status trong queue
-      const job = await downloadQueue.getJob(id);
+      // Job ID in queue is formatted as "download-{jobId}"
+      const queueJobId = id.startsWith('download-') ? id : `download-${id}`;
+      const job = await downloadQueue.getJob(queueJobId);
       if (job) {
         // Lưu job data để resume sau
         await job.updateData({ ...job.data, paused: true });
@@ -284,7 +293,9 @@ export class DownloadController {
       const { id } = req.params;
       
       // Lấy job từ queue
-      const job = await downloadQueue.getJob(id);
+      // Job ID in queue is formatted as "download-{jobId}"
+      const queueJobId = id.startsWith('download-') ? id : `download-${id}`;
+      const job = await downloadQueue.getJob(queueJobId);
       if (!job) {
         res.status(404).json({ error: 'Job không tồn tại' });
         return;

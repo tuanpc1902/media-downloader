@@ -9,6 +9,7 @@ import { VideoInfo, PlaylistInfo } from '../types';
 import { AlertCircle, Music, Video, Home as HomeIcon, Play } from 'lucide-react';
 import { analyzeVideo, analyzePlaylist } from '../services/api';
 import { PlaylistPreview } from '../components/PlaylistPreview';
+import { isPlaylistUrl } from '../utils/urlValidator';
 
 export function AudioDownloadPage() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -25,8 +26,8 @@ export function AudioDownloadPage() {
     setPlaylistInfo(null);
     
     try {
-      // Check if it's a playlist URL (has list= parameter)
-      const isPlaylist = url.includes('list=') || url.includes('/playlist');
+      // Check if it's a playlist URL (only if it has playlist ID but no video ID)
+      const isPlaylist = isPlaylistUrl(url);
       
       if (isPlaylist) {
         const playlist = await analyzePlaylist(url);

@@ -2,7 +2,7 @@ import { cn } from '../../utils/cn';
 
 export type BadgeVariant = 'status' | 'platform' | 'default';
 export type StatusType = 'pending' | 'downloading' | 'processing' | 'completed' | 'error' | 'cancelled';
-export type PlatformType = 'youtube' | 'soundcloud' | 'tiktok';
+export type PlatformType = 'youtube' | 'soundcloud' | 'tiktok' | 'facebook';
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -13,18 +13,19 @@ interface BadgeProps {
 }
 
 const statusStyles: Record<StatusType, string> = {
-  pending: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-  downloading: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  processing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  pending: 'bg-secondary-100 text-secondary-700 dark:bg-secondary-800 dark:text-secondary-300',
+  downloading: 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300',
+  processing: 'bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-300',
+  completed: 'bg-success-100 text-success-700 dark:bg-success-900 dark:text-success-300',
+  error: 'bg-error-100 text-error-700 dark:bg-error-900 dark:text-error-300',
+  cancelled: 'bg-secondary-100 text-secondary-600 dark:bg-secondary-800 dark:text-secondary-400',
 };
 
 const platformStyles: Record<PlatformType, string> = {
-  youtube: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  soundcloud: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  tiktok: 'bg-black text-white dark:bg-gray-800 dark:text-gray-200',
+  youtube: 'bg-error-100 text-error-700 dark:bg-error-900 dark:text-error-300',
+  soundcloud: 'bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-300',
+  tiktok: 'bg-secondary-900 text-white dark:bg-secondary-800 dark:text-secondary-200',
+  facebook: 'bg-blue-600 text-white dark:bg-blue-700 dark:text-blue-100',
 };
 
 export function Badge({ variant = 'default', status, platform, children, className }: BadgeProps) {
@@ -35,7 +36,7 @@ export function Badge({ variant = 'default', status, platform, children, classNa
   } else if (variant === 'platform' && platform) {
     variantClass = platformStyles[platform];
   } else {
-    variantClass = 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    variantClass = 'bg-secondary-100 text-secondary-700 dark:bg-secondary-800 dark:text-secondary-300';
   }
 
   return (

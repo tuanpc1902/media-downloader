@@ -115,7 +115,7 @@ brew install yt-dlp ffmpeg
 
 **Docker:**
 ```bash
-docker run -d -p 6379:6379 redis
+docker run -d -p 6379:6379 --name yt-downloader-redis redis:7-alpine
 ```
 
 **Linux:**
@@ -162,15 +162,15 @@ PORT=3001
 NODE_ENV=development
 REDIS_HOST=localhost
 REDIS_PORT=6379
-CORS_ORIGIN=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
 YTDLP_USER_AGENT=...
 YTDLP_COOKIE_FILE=...
 ```
 
 ### Frontend (.env)
 ```env
-VITE_API_URL=http://localhost:3001
-VITE_WS_URL=ws://localhost:3001
+VITE_API_URL=http://localhost:3001/api
+VITE_WS_URL=http://localhost:3001
 ```
 
 Xem chi tiết trong `backend/env.example` và `frontend/env.example`.
