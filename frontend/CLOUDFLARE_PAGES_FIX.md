@@ -46,22 +46,29 @@ rm frontend/wrangler.toml
 
 Cloudflare Pages **KHÔNG CẦN** wrangler.toml cho Vite projects.
 
-### Cách 3: Deploy từ CLI
+### Cách 3: Deploy từ CLI (100% chắc chắn work)
 
-Nếu dashboard không work, dùng CLI:
+**⚠️ QUAN TRỌNG**: Dùng `wrangler pages deploy` (Pages), KHÔNG phải `wrangler deploy` (Workers)!
 
 ```bash
-# Install Wrangler
+# 1. Install Wrangler CLI
 npm install -g wrangler
 
-# Login
+# 2. Login
 wrangler login
 
-# Deploy
+# 3. Build project
 cd frontend
+npm install
 npm run build
+
+# 4. Deploy với Pages command (KHÔNG phải Workers!)
 wrangler pages deploy dist --project-name=your-project-name
 ```
+
+**Lưu ý**: 
+- Command đúng: `wrangler pages deploy` ✅
+- Command sai: `wrangler deploy` ❌ (đây là Workers command)
 
 ## ✅ Checklist
 
