@@ -102,12 +102,18 @@ curl https://your-app-name-backend.fly.dev/api/health
 3. Connect Git repository (GitHub/GitLab)
 4. Chọn repository và branch
 
-### Bước 2: Build Settings
+### Bước 2: Build Settings (⚠️ QUAN TRỌNG)
 
-- **Framework preset**: Vite
+**⚠️ LƯU Ý**: Cloudflare Pages có thể detect sai project như Workers. Hãy set manual:
+
+- **Framework preset**: `Vite` hoặc `None` (KHÔNG chọn Workers!)
 - **Build command**: `npm run build`
 - **Build output directory**: `dist`
-- **Root directory**: `/frontend` (nếu frontend là subfolder)
+- **Root directory**: `/frontend` (nếu frontend là subfolder) hoặc để trống
+- **Node version**: `18` hoặc `20` (optional, nhưng recommended)
+
+**Nếu gặp lỗi "wrangler versions upload"**: 
+- Xem file `frontend/CLOUDFLARE_PAGES_FIX.md` để fix
 
 ### Bước 3: Environment Variables
 
